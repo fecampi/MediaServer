@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Server - HLS Video Streaming</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
+  <script type="module">
+    import van from "https://cdn.jsdelivr.net/npm/vanjs-core@1.5.2/src/van.min.js";
+
+    const { div, h1, h2, p, form, input, select, option, button, label, table, thead, tbody, tr, th, td, span, i } = van.tags;
+
+    // Icon helper usando Font Awesome
+    const Icon = (iconClass, props = {}) => {
+      return i({ class: `fa-solid fa-${iconClass}`, ...props });
+    };
+
+    // State management
+    const videos = van.state([]);
+    const uploadProgress = van.state(0);
+    const isUploading = van.state(false);
+    const statusMessage = van.state({ text: '', type: '' });
+    const selectedFile = van.state(null);
+    const isDragging = van.state(false);
+    const captureStatus = van.state('');
+
+    // Utility functions
+    const formatFileSize = (bytes) => {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    const formatDuration = (seconds) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = ('0' + Math.floor(seconds % 60)).slice(-2);
+      return `${mins}:${secs} min`;
+    };
+
+    // Components
+    const Header = () => div({ class: 'header' },
+      h1(
+        Icon('film', { style: 'font-size: 2.2rem; vertical-align: middle; margin-right: 8px;' }),
+        'Media Server HLS'
+      ),
+      p('Upload videos and watch HLS streaming')
+    );
+
+    const CaptureSection = () => {
+      let urlInput, durationSelect, formatSelect;
+      
+      const handleCapture = async (e) => {
+        e.preventDefault();
+        const url = urlInput.value.trim();
+        const duration = durationSelect.value;
+        const format = formatSelect.value;
+        
+        if (!url) {
+          captureStatus.val = 'Please enter a valid HLS manifest URL.';
+          return;
+        }
+        
+        captureStatus.val = 'Capturing stream...';
+        
+        try {
+          const res = await fetch('/capture', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, duration, format })
+          });
+          const data = await res.json();
+          
+          if (data.success) {
+            captureStatus.val = 'Stream captured successfully!';
+            videos.val = [...videos.val, data.video];
+          } else {
+            captureStatus.val = data.error || 'Error capturing stream.';
+          }
+        } catch (err) {
+          captureStatus.val = 'Server error.';
+        }
+      };
+
+      return div({ class: 'upload-section', style: 'background: white; color: #222; margin-bottom: 2rem;' },
+        h2({ style: 'color: #1976d2; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px;' },
+          Icon('cloud-arrow-down', { style: 'font-size: 1.8rem;' }),
+          'Capture HLS Stream'
+        ),
+        form({ onsubmit: handleCapture, style: 'display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end;' },
+          div({ style: 'flex: 2 1 320px; min-width: 220px;' },
+            label({ for: 'captureUrl', style: 'font-weight: 500; color: #222; display: block;' }, 'HLS Manifest URL (.m3u8)'),
+            urlInput = input({
+              type: 'text',
+              id: 'captureUrl',
+              placeholder: 'https://.../playlist.m3u8',
+              style: 'width: 100%; padding: 0.7rem 1rem; border-radius: 4px; border: 1px solid #ccc; background: #f5f5f5; color: #222; font-size: 1rem; margin-top: 0.3rem;'
+            })
+          ),
+          div({ style: 'flex: 1 1 180px; min-width: 160px;' },
+            label({ for: 'captureDuration', style: 'font-weight: 500; color: #222; display: block;' }, 'Capture Duration'),
+            durationSelect = select({
+              id: 'captureDuration',
+              style: 'width: 100%; padding: 0.7rem 1rem; border-radius: 4px; border: 1px solid #ccc; background: #f5f5f5; color: #222; font-size: 1rem; margin-top: 0.3rem;'
+            },
+              option({ value: '60' }, '1 minute'),
+              option({ value: '300' }, '5 minutes'),
+              option({ value: '600' }, '10 minutes'),
+              option({ value: '1800' }, '30 minutes'),
+              option({ value: '3600' }, '1 hour'),
+              option({ value: 'all' }, 'Full')
+            )
+          ),
+          div({ style: 'flex: 1 1 180px; min-width: 160px;' },
+            label({ for: 'captureFormat', style: 'font-weight: 500; color: #222; display: block;' }, 'Format'),
+            formatSelect = select({
+              id: 'captureFormat',
+              style: 'width: 100%; padding: 0.7rem 1rem; border-radius: 4px; border: 1px solid #ccc; background: #f5f5f5; color: #222; font-size: 1rem; margin-top: 0.3rem;'
+            },
+              option({ value: 'original' }, 'Original (no conversion)'),
+              option({ value: 'ts' }, 'HLS TS (.ts)'),
+              option({ value: 'fmp4' }, 'HLS fMP4 (.mp4)')
+            )
+          ),
+          div({ style: 'flex: 0 1 160px; min-width: 120px;' },
+            button({
+              type: 'submit',
+              class: 'btn',
+              style: 'width: 100%; background: linear-gradient(45deg, #1976d2, #42a5f5); color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px;'
+            },
+              Icon('download', { style: 'font-size: 1rem;' }),
+              'Capture'
+            )
+          )
+        ),
+        () => captureStatus.val ? div({ style: 'margin-top: 1.5rem; padding: 1rem; border-radius: 4px; background: #e3f2fd; color: #1976d2;' }, captureStatus.val) : ''
+      );
+    };
+
+    const UploadSection = () => {
+      let fileInput, formatSelect;
+      
+      const handleDragOver = (e) => {
+        e.preventDefault();
+        isDragging.val = true;
+      };
+      
+      const handleDragLeave = (e) => {
+        e.preventDefault();
+        isDragging.val = false;
+      };
+      
+      const handleDrop = (e) => {
+        e.preventDefault();
+        isDragging.val = false;
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          fileInput.files = files;
+          selectedFile.val = files[0];
+        }
+      };
+      
+      const handleFileSelect = (e) => {
+        if (e.target.files.length > 0) {
+          selectedFile.val = e.target.files[0];
+        }
+      };
+      
+      const handleUpload = async (e) => {
+        e.preventDefault();
+        
+        if (!selectedFile.val) {
+          statusMessage.val = { text: 'Please select a video file.', type: 'error' };
+          return;
+        }
+        
+        const formData = new FormData();
+        formData.append('video', selectedFile.val);
+        formData.append('format', formatSelect.value);
+        
+        isUploading.val = true;
+        uploadProgress.val = 0;
+        
+        const progressInterval = setInterval(() => {
+          uploadProgress.val = Math.min(uploadProgress.val + Math.random() * 30, 90);
+        }, 500);
+        
+        try {
+          const res = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          
+          clearInterval(progressInterval);
+          uploadProgress.val = 100;
+          
+          if (data.success) {
+            statusMessage.val = { text: 'Video successfully converted! You can watch it now.', type: 'success' };
+            videos.val = [...videos.val, data.video];
+            selectedFile.val = null;
+            fileInput.value = '';
+          } else {
+            statusMessage.val = { text: data.error || 'Video upload error.', type: 'error' };
+          }
+        } catch (err) {
+          clearInterval(progressInterval);
+          statusMessage.val = { text: 'Server communication error.', type: 'error' };
+        } finally {
+          isUploading.val = false;
+          setTimeout(() => {
+            uploadProgress.val = 0;
+            if (statusMessage.val.type === 'success') {
+              statusMessage.val = { text: '', type: '' };
+            }
+          }, 2000);
+        }
+      };
+
+      const UploadAreaContent = () => {
+        if (selectedFile.val) {
+          return div({ style: 'display: flex; flex-direction: column; align-items: center;' },
+            Icon('circle-check', { style: 'font-size: 3rem; color: #4caf50; margin-bottom: 1rem;' }),
+            p({ style: 'font-size: 18px; margin-bottom: 0.5rem;' }, 'File selected:'),
+            p({ style: 'color: #1976d2; font-weight: 500;' }, selectedFile.val.name),
+            p({ style: 'color: #666; font-size: 14px;' }, 'Size: ' + formatFileSize(selectedFile.val.size))
+          );
+        } else {
+          return div({ style: 'display: flex; flex-direction: column; align-items: center;' },
+            Icon('cloud-arrow-up', { style: 'font-size: 3rem; color: #1976d2; margin-bottom: 1rem;' }),
+            p({ style: 'font-size: 18px; margin-bottom: 0.5rem;' }, 'Click here or drag a video file'),
+            p({ style: 'color: #666; font-size: 14px;' }, 'Supported formats: MP4, AVI, MOV, WMV, FLV, WebM, MKV'),
+            p({ style: 'color: #666; font-size: 12px;' }, 'Max size: 500MB')
+          );
+        }
+      };
+
+      return div({ class: 'upload-section', style: 'background: white; color: #222;' },
+        h2({ style: 'color: #1976d2; display: flex; align-items: center; gap: 8px;' },
+          Icon('cloud-arrow-up', { style: 'font-size: 1.8rem;' }),
+          'Video Upload'
+        ),
+        form({ onsubmit: handleUpload },
+          div({
+            class: 'upload-area',
+            onclick: () => fileInput.click(),
+            ondragover: handleDragOver,
+            ondragleave: handleDragLeave,
+            ondrop: handleDrop,
+            style: () => `border: 2px dashed #1976d2; background: ${isDragging.val ? 'rgba(25, 118, 210, 0.1)' : '#f5f5f5'}; color: #222; border-radius: 8px; padding: 2rem; text-align: center; margin-bottom: 1rem; cursor: pointer; transition: all 0.3s ease;`
+          },
+            () => UploadAreaContent()
+          ),
+          fileInput = input({ type: 'file', accept: 'video/*', style: 'display: none;', onchange: handleFileSelect }),
+          div({ style: 'margin: 1rem 0; text-align: center;' },
+            label({ style: 'font-weight: 500; margin-right: 0.5rem; color: #222;' }, 'Output format:'),
+            formatSelect = select({ style: 'padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid #ccc; font-size: 1rem; background: #f5f5f5; color: #222;' },
+              option({ value: 'original' }, 'Original (no conversion)'),
+              option({ value: 'ts' }, 'HLS TS (.ts)'),
+              option({ value: 'fmp4' }, 'HLS fMP4 (.mp4)')
+            )
+          ),
+          () => uploadProgress.val > 0 ? div({ class: 'progress-bar', style: 'width: 100%; height: 4px; background-color: #e0e0e0; border-radius: 2px; overflow: hidden; margin: 1rem 0;' },
+            div({ class: 'progress-fill', style: () => `height: 100%; background: linear-gradient(90deg, #1976d2, #42a5f5); width: ${uploadProgress.val}%; transition: width 0.3s ease;` })
+          ) : '',
+          () => statusMessage.val.text ? div({
+            class: `status-message status-${statusMessage.val.type}`,
+            style: () => `padding: 1rem; border-radius: 4px; margin: 1rem 0; background-color: ${statusMessage.val.type === 'success' ? '#e8f5e8' : '#ffebee'}; color: ${statusMessage.val.type === 'success' ? '#2e7d32' : '#c62828'}; border: 1px solid ${statusMessage.val.type === 'success' ? '#4caf50' : '#f44336'};`
+          }, statusMessage.val.text) : '',
+          button({
+            type: 'submit',
+            class: 'btn',
+            style: 'display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 auto;',
+            disabled: () => isUploading.val
+          },
+            () => isUploading.val 
+              ? Icon('spinner', { style: 'font-size: 1rem; animation: spin 1s linear infinite;' })
+              : Icon('upload', { style: 'font-size: 1rem;' }),
+            () => isUploading.val ? 'PROCESSING...' : 'UPLOAD'
+          )
+        )
+      );
+    };
+
+    const VideoList = () => div({ class: 'video-section' },
+      h2({ style: 'color: #1976d2; display: flex; align-items: center; gap: 8px;' },
+        Icon('list', { style: 'font-size: 1.8rem;' }),
+        'Available Streams'
+      ),
+      div({ style: 'overflow-x: auto;' },
+        table({ class: 'video-table', style: 'width: 100%; border-collapse: collapse; margin-top: 1rem;' },
+          thead(
+            tr({ style: 'background: #f5f5f5;' },
+              th({ style: 'padding: 8px; border-bottom: 1px solid #ddd; text-align: left;' }, 'Name'),
+              th({ style: 'padding: 8px; border-bottom: 1px solid #ddd; text-align: left;' }, 'Date'),
+              th({ style: 'padding: 8px; border-bottom: 1px solid #ddd; text-align: left;' }, 'Type'),
+              th({ style: 'padding: 8px; border-bottom: 1px solid #ddd; text-align: left;' }, 'Video Info'),
+              th({ style: 'padding: 8px; border-bottom: 1px solid #ddd; text-align: left;' }, 'Stream URL')
+            )
+          ),
+          tbody(
+            () => videos.val.length === 0 
+              ? tr(
+                  td({ colspan: '5', style: 'text-align: center; color: #666; padding: 2rem;' },
+                    div({ style: 'display: flex; flex-direction: column; align-items: center; gap: 1rem;' },
+                      Icon('film', { style: 'font-size: 4rem; color: #bbb;' }),
+                      'No videos yet. Upload the first one!'
+                    )
+                  )
+                )
+              : videos.val.map(video => {
+                  const infoLines = [];
+                  
+                  if (video.videoCodec) {
+                    let videoLine = `Video: ${video.videoCodec}`;
+                    if (video.width && video.height) videoLine += ` ${video.width}x${video.height}`;
+                    if (video.fps) videoLine += ` ${Math.round(video.fps * 10) / 10}fps`;
+                    infoLines.push(videoLine);
+                  }
+                  
+                  infoLines.push(`Audio: ${video.audioCodec || 'N/A'}`);
+                  
+                  if (video.duration) {
+                    infoLines.push(`Duration: ${formatDuration(video.duration)}`);
+                  }
+                  
+                  if (video.bitrate) {
+                    infoLines.push(`Bitrate: ${Math.round(video.bitrate / 1000)} kbps`);
+                  }
+                  
+                  return tr(
+                    td({ style: 'padding: 8px; word-break: break-all;' }, video.originalName),
+                    td({ style: 'padding: 8px;' }, new Date(video.uploadDate).toLocaleDateString('en-US')),
+                    td({ style: 'padding: 8px; text-transform: uppercase;' }, video.segmentType === 'original' ? 'Original' : video.segmentType),
+                    td({ style: 'padding: 8px; font-size: 12px; color: #444; min-width: 120px;' },
+                      ...infoLines.map((line, idx) => 
+                        idx < infoLines.length - 1 
+                          ? [line, document.createElement('br')] 
+                          : line
+                      ).flat()
+                    ),
+                    td({ style: 'padding: 8px; word-break: break-all; background: #f5f5f5; color: #222; border-radius: 4px; font-size: 13px; max-width: 320px;' }, video.fullUrl)
+                  );
+                })
+          )
+        )
+      )
+    );
+
+    // Main App
+    const App = () => div({ class: 'container' },
+      Header(),
+      CaptureSection(),
+      UploadSection(),
+      VideoList()
+    );
+
+    van.add(document.body, App());
+  </script>
+  <style>
+    body {
+      font-family: "Roboto", sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1976d2, #42a5f5);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .upload-section {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+    }
+
+    .video-section {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn {
+      background: linear-gradient(45deg, #1976d2, #42a5f5);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body></body>
+</html>

@@ -1,0 +1,31 @@
+# Node.js
+node_modules/
+.env
+*.log
+dist/
+build/
+/uploads/
+/hls/
+/public/
+.DS_Store
+*.sqlite
+*.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage/
+.idea/
+.vscode/
+*.tgz
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Sistema operacional
+Thumbs.db
+Desktop.ini
+
+# Outros
+*.local
+*.cache
