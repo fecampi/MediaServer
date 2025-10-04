@@ -1,0 +1,115 @@
+<style>
+  /* Tabs */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .tab-link {
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    color: #e50914;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    font-weight: 500;
+  }
+
+  .tab-link:hover {
+    background: #1e1e1e;
+    border-radius: 5px 5px 0 0;
+  }
+  .tab-link.active {
+    border-bottom-color: #e50914;
+    font-weight: 700;
+  }
+
+  /* Card */
+  .card {
+    background: rgba(30, 30, 30, 0.60);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px 0 rgba(0,0,0,0.25);
+    backdrop-filter: blur(4px) saturate(110%);
+    -webkit-backdrop-filter: blur(4px) saturate(110%);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+    padding: 2rem;
+  }
+
+  .card:hover {
+    /* Remove transform para não mexer na posição */
+    background: #2a2a2a; /* leve escurecimento */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* sombra mais forte, mas sem pular */
+  }
+
+  .card h5 {
+    margin-top: 1rem;
+    font-weight: 500;
+    font-size: 1.2rem;
+    color: #fff;
+  }
+
+  .card p {
+    color: #fff;
+  }
+
+  .card label {
+    font-weight: 500;
+    color: #ffffff; /* branco absoluto */
+  }
+
+  @media (max-width: 768px) {
+    .card {
+      padding: 1.5rem;
+    }
+    .navbar-brand {
+      font-size: 1.2rem;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .tab-link span {
+      display: none;
+    }
+    .tab-link i {
+      font-size: 1.5rem;
+      margin: 0;
+    }
+    .tabs {
+      padding: 0.25rem 0.2rem;
+      gap: 0.2rem;
+    }
+  }
+
+  /* Container */
+  .container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+</style>
+
+<!-- Tabs -->
+<div class="tabs">
+  <a href="/" class="tab-link<% if (activeTab === 'home') { %> active<% } %>">
+    <i class="bi bi-house"></i> <span>Home</span>
+  </a>
+  <a
+    href="/capture"
+    class="tab-link<% if (activeTab === 'capture') { %> active<% } %>"
+  >
+    <i class="bi bi-cloud-download"></i> <span>Capture Stream</span>
+  </a>
+  <a
+    href="/upload"
+    class="tab-link<% if (activeTab === 'upload') { %> active<% } %>"
+  >
+    <i class="bi bi-upload"></i> <span>Upload Video</span>
+  </a>
+  <a
+    href="/videos"
+    class="tab-link<% if (activeTab === 'videos') { %> active<% } %>"
+  >
+    <i class="bi bi-list-ul"></i> <span>Video List</span>
+  </a>
+</div>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Media Server HLS - Capture</title>
+
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <!-- Navbar -->
+    <%- include('header') %>
+
+    <div class="container">
+      <!-- Tabs -->
+      <%- include('tabs', { activeTab: 'capture' }) %>
+
+      <!-- Subtitle -->
+      <div class="mb-4 text-center">
+        <p class="lead">Capture a live HLS stream and save it to your server</p>
+      </div>
+
+      <!-- Capture Card -->
+      <div class="card">
+        <form id="captureForm">
+          <div class="mb-3">
+            <label for="captureUrl">HLS Manifest URL (.m3u8)</label>
+            <input
+              type="text"
+              id="captureUrl"
+              name="captureUrl"
+              placeholder="https://.../playlist.m3u8"
+              class="form-control"
+            />
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label for="captureDuration">Capture Duration</label>
+              <select
+                id="captureDuration"
+                name="captureDuration"
+                class="form-select"
+              >
+                <option value="60">1 minute</option>
+                <option value="300">5 minutes</option>
+                <option value="600">10 minutes</option>
+                <option value="1800">30 minutes</option>
+                <option value="3600">1 hour</option>
+                <option value="all">Full</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="captureFormat">Format</label>
+              <select
+                id="captureFormat"
+                name="captureFormat"
+                class="form-select"
+              >
+                <option value="original">Original (no conversion)</option>
+                <option value="ts">HLS TS (.ts)</option>
+                <option value="fmp4">HLS fMP4 (.mp4)</option>
+              </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-download"></i> Capture
+              </button>
+            </div>
+          </div>
+        </form>
+        <div id="captureStatus" style="margin-top: 1.5rem; display: none"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <%- include('footer') %>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      const captureForm = document.getElementById("captureForm");
+      const captureStatus = document.getElementById("captureStatus");
+
+      captureForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const url = document.getElementById("captureUrl").value.trim();
+        const duration = document.getElementById("captureDuration").value;
+        const format = document.getElementById("captureFormat").value;
+        if (!url) {
+          captureStatus.style.display = "block";
+          captureStatus.textContent = "Please enter a valid HLS manifest URL.";
+          captureStatus.style.color = "#c62828";
+          return;
+        }
+        captureStatus.style.display = "block";
+        captureStatus.textContent = "Capturing stream...";
+        captureStatus.style.color = "#E50914";
+        try {
+          let captureUrl = "/capture/original";
+          if (format === "ts") captureUrl = "/capture/ts";
+          else if (format === "fmp4") captureUrl = "/capture/fmp4";
+
+          const res = await fetch(captureUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url, duration }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            captureStatus.textContent = "Stream captured successfully!";
+            captureStatus.style.color = "#2e7d32";
+            setTimeout(() => {
+              window.location.href = "/videos";
+            }, 2000);
+          } else {
+            captureStatus.textContent = data.error || "Error capturing stream.";
+            captureStatus.style.color = "#c62828";
+          }
+        } catch (err) {
+          captureStatus.textContent = "Server error.";
+          captureStatus.style.color = "#c62828";
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,273 @@
+<!-- Bootstrap Icons -->
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
+  rel="stylesheet"
+/>
+<!-- Google Fonts -->
+<link
+  href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  body {
+    font-family: "Roboto", sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #fff;
+    background-color: #121212;
+    background-image: url("/public/fundo.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    background: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)),
+      url("/public/fundo.png") center center / cover no-repeat;
+    filter: blur(8px) brightness(0.5);
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .navbar {
+    background: rgba(20, 20, 20, 0.85);
+    border-bottom: 1.5px solid rgba(229, 9, 20, 0.3);
+    box-shadow: 0 4px 30px rgba(229, 9, 20, 0.2);
+    backdrop-filter: blur(10px) saturate(120%);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    height: 70px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .navbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #e50914, #ff1a1a, transparent);
+    animation: slideLight 3s infinite;
+  }
+
+  @keyframes slideLight {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  .navbar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(229, 9, 20, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(229, 9, 20, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .container-fluid {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 700;
+    font-size: 1.6rem;
+    text-decoration: none;
+    position: relative;
+    transition: all 0.3s ease;
+    font-family: "Roboto", sans-serif;
+    letter-spacing: 0.5px;
+  }
+
+  .navbar-brand i {
+    font-size: 2.2rem;
+    color: #e50914 !important;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: inline-block;
+    filter: none;
+    -webkit-text-fill-color: #e50914 !important;
+    background: none !important;
+    -webkit-background-clip: initial !important;
+    background-clip: initial !important;
+  }
+
+  .navbar-brand:hover i {
+    transform: rotate(360deg) scale(1.15);
+    color: #ff1a1a !important;
+    filter: drop-shadow(0 0 10px rgba(229, 9, 20, 0.6));
+    -webkit-text-fill-color: #ff1a1a !important;
+  }
+
+  .navbar-brand {
+    background: linear-gradient(135deg, #fff 0%, #e50914 50%, #fff 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 3s ease infinite;
+  }
+
+  @keyframes gradientShift {
+    0%, 100% {
+      background-position: 0% center;
+    }
+    50% {
+      background-position: 100% center;
+    }
+  }
+
+  .navbar-brand:hover {
+    animation: gradientShiftFast 1s ease infinite, glow 1.5s ease-in-out infinite;
+    text-shadow: 0 0 20px rgba(229, 9, 20, 0.5);
+  }
+
+  @keyframes gradientShiftFast {
+    0%, 100% {
+      background-position: 0% center;
+    }
+    50% {
+      background-position: 200% center;
+    }
+  }
+
+  @keyframes glow {
+    0%, 100% {
+      filter: brightness(1);
+    }
+    50% {
+      filter: brightness(1.3);
+    }
+  }
+
+  .navbar-brand::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0%;
+    height: 2px;
+    background: linear-gradient(90deg, #e50914, #ff1a1a);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .navbar-brand:hover::after {
+    width: 100%;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .form-control,
+  .form-select {
+    background: #121212;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 0.6rem 1rem;
+  }
+
+  .form-control::placeholder {
+    color: #aaa;
+  }
+
+  .btn-primary {
+    background-color: #e50914;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: #ff1a1a;
+  }
+
+  .status-success {
+    background-color: #1b5e20;
+    color: #fff;
+    border: 1px solid #4caf50;
+  }
+
+  .status-error {
+    background-color: #b71c1c;
+    color: #fff;
+    border: 1px solid #f44336;
+  }
+
+  .btn:disabled {
+    background: #333;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 768px) {
+    .container-fluid {
+      padding: 0 1rem;
+    }
+    
+    .navbar-brand {
+      font-size: 1.3rem;
+    }
+    
+    .navbar-brand i {
+      font-size: 1.8rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .navbar-brand {
+      font-size: 1.2rem;
+      gap: 0.6rem;
+    }
+    
+    .navbar-brand i {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<nav class="navbar navbar-expand-lg mb-5">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">
+      <i class="bi bi-play-circle-fill"></i> Media Server HLS
+    </a>
+  </div>
+</nav>

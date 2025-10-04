@@ -1,0 +1,235 @@
+<!-- Bootstrap Icons -->
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
+  rel="stylesheet"
+/>
+<!-- Google Fonts -->
+<link
+  href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  /* Body & Geral */
+  body {
+    background: #121212;
+    color: #fff;
+    font-family: "Roboto", sans-serif;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Container */
+  .container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  /* Card */
+  .card {
+    background: #1e1e1e;
+    border: none;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+  }
+
+  .card:hover {
+    background: #2a2a2a;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  }
+
+  .card h5 {
+    margin-top: 1rem;
+    font-weight: 500;
+    font-size: 1.2rem;
+    color: #fff;
+  }
+
+  .card p {
+    color: #fff;
+  }
+
+  .card label {
+    font-weight: 500;
+    color: #ffffff;
+  }
+
+  /* Form elements */
+  .form-control,
+  .form-select {
+    background: #121212;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 0.6rem 1rem;
+  }
+
+  .form-control::placeholder {
+    color: #aaa;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background-color: #e50914;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: #ff1a1a;
+  }
+
+  .btn:disabled {
+    background: #333;
+    cursor: not-allowed;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 1rem 0;
+    display: none;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e50914, #ff1a1a);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  /* Status messages */
+  .status-message {
+    padding: 1rem;
+    border-radius: 5px;
+    margin: 1rem 0;
+    display: none;
+  }
+
+  .status-success {
+    background-color: #1b5e20;
+    color: #fff;
+    border: 1px solid #4caf50;
+  }
+
+  .status-error {
+    background-color: #b71c1c;
+    color: #fff;
+    border: 1px solid #f44336;
+  }
+
+  /* Upload area */
+  .upload-area {
+    border: 2px dashed #e50914;
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    background: #1e1e1e;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    color: #fff;
+  }
+
+  .upload-area:hover {
+    border-color: #ff1a1a;
+    background: #2a2a2a;
+  }
+
+  .upload-area.dragover {
+    border-color: #ff1a1a;
+    background: #2a2a2a;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  /* Video table */
+  .video-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1.5px solid #333;
+    background: #1e1e1e;
+    color: #fff;
+  }
+
+  .video-table th {
+    padding: 12px;
+    border-bottom: 1px solid #333;
+    text-align: left;
+    background: #333;
+    color: #fff;
+  }
+
+  .video-table td {
+    padding: 12px;
+    border-bottom: 1px solid #333;
+    word-break: break-all;
+  }
+
+  .video-table tbody tr:hover {
+    background: #2a2a2a;
+  }
+
+  .btn {
+    background-color: transparent;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+  }
+
+  .btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-copy {
+    color: #fff;
+  }
+
+  .btn-copy:hover {
+    color: #e50914;
+  }
+
+  .btn-delete {
+    color: #fff;
+  }
+
+  .btn-delete:hover {
+    color: #e50914;
+  }
+
+  /* Responsividade */
+  @media (max-width: 768px) {
+    .card {
+      padding: 1.5rem;
+    }
+    .navbar-brand {
+      font-size: 1.2rem;
+    }
+  }
+</style>

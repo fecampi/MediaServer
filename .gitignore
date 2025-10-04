@@ -21,6 +21,7 @@ coverage/
 *.swo
 *.bak
 *.tmp
+database.json
 
 # Sistema operacional
 Thumbs.db

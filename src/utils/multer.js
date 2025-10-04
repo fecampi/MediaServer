@@ -1,12 +1,12 @@
 const multer = require('multer');
 
-// Configuração do Multer para upload de arquivos (memória)
+// Multer configuration for file upload (memory)
 const multerStorage = multer.memoryStorage();
 
 const upload = multer({
   storage: multerStorage,
   fileFilter: (req, file, cb) => {
-    // Aceitar apenas arquivos de vídeo
+    // Accept only video files
     const allowedMimes = [
       'video/mp4',
       'video/avi',

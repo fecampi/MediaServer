@@ -6,31 +6,27 @@ const path = require("path");
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 /**
- * Função para gerar HLS com fMP4 a partir de um vídeo com múltiplas resoluções
- * @param {string} inputFile Caminho do arquivo de entrada (vídeo)
- * @param {string} outputFolder Caminho da pasta de saída
+ * Function to generate HLS with fMP4 from a video with multiple resolutions
+ * @param {string} inputFile Input file path (video)
+ * @param {string} outputFolder Output folder path
  */
 async function generateHLS_fMP4(inputFile, outputFolder) {
-  console.log("🎬 Iniciando processo de conversão HLS (fMP4)...");
-  console.log(`📁 Arquivo de entrada: ${inputFile}`);
-  // Força saída para dist/hls
+  // Force output to dist/hls
   const distHls = path.join(__dirname, '..', '..', 'dist', 'hls');
   let finalOutputFolder = outputFolder;
   if (!outputFolder.startsWith(distHls)) {
-    // Se não está em dist/hls, ajusta
+    // If not in dist/hls, adjust
     const baseName = path.basename(outputFolder);
     finalOutputFolder = path.join(distHls, baseName);
   }
   return new Promise((resolve, reject) => {
     ffmpeg(inputFile).ffprobe((err, metadata) => {
       if (err) {
-        console.error("Erro ao obter metadados:", err);
+        console.error("Error getting metadata:", err);
         reject(err);
         return;
       }
-      console.log("Metadados obtidos com sucesso!");
-      // Obtém o primeiro fluxo de vídeo
-      console.log("Procurando fluxo de vídeo nos metadados...");
+      // Get the first video stream
       const videoStream = metadata.streams.find(
         (stream) => stream.codec_type === "video"
       );
@@ -40,17 +36,7 @@ async function generateHLS_fMP4(inputFile, outputFolder) {
         const duration = metadata.format.duration;
         const bitrate = metadata.format.bit_rate;
 
-        console.log("Informações do vídeo original:");
-        console.log(`   • Resolução: ${width}x${height}`);
-        console.log(
-          `   • Duração: ${duration ? Math.round(duration) : "N/A"} segundos`
-        );
-        console.log(
-          `   • Bitrate: ${bitrate ? Math.round(bitrate / 1000) : "N/A"} kbps`
-        );
-        console.log(`   • Codec: ${videoStream.codec_name}`);
-
-        // Resoluções desejadas
+        // Desired resolutions
         const resolutions = [
           { label: "1080p", width: 1920, height: 1080 },
           { label: "720p", width: 1280, height: 720 },
@@ -58,30 +44,19 @@ async function generateHLS_fMP4(inputFile, outputFolder) {
           { label: "360p", width: 640, height: 360 },
         ];
 
-        console.log("Filtrando resoluções compatíveis...");
-        // Filtra as resoluções que são menores ou iguais à resolução original
+        // Filter resolutions that are smaller or equal to original
         const validResolutions = resolutions.filter(
           (resolution) =>
             resolution.width <= width && resolution.height <= height
         );
 
-        console.log(
-          "Resoluções que serão processadas: " +
-            validResolutions.map((r) => r.label).join(", ")
-        );
-
-        // Usa diretamente a pasta de saída informada
+        // Use the provided output folder directly
         const outputVideoFolder = finalOutputFolder;
-        console.log(`Usando pasta de saída: ${outputVideoFolder}`);
         if (!fs.existsSync(outputVideoFolder)) {
           fs.mkdirSync(outputVideoFolder, { recursive: true });
-          console.log("Pasta de saída criada com sucesso!");
-        } else {
-          console.log("Pasta de saída já existe");
         }
 
-        // Gerar fluxos de vídeo e arquivos .m3u8 para cada resolução
-        console.log("Iniciando processamento das resoluções...");
+        // Generate video streams and .m3u8 files for each resolution
         let processedCount = 0;
         const totalResolutions = validResolutions.length;
 
@@ -100,22 +75,11 @@ async function generateHLS_fMP4(inputFile, outputFolder) {
               `init_${resolution.label}.mp4`
             );
 
-            console.log(
-              `Processando resolução ${resolution.label} (${
-                index + 1
-              }/${totalResolutions})`
-            );
-            console.log(`   Saída: ${path.basename(outputFile)}`);
-            console.log(
-              `   Resolução alvo: ${resolution.width}x${resolution.height}`
-            );
-            console.log(`   Formato: fMP4 (Fragmented MP4)`);
-
             const startTime = Date.now();
 
             ffmpeg(inputFile)
               .outputOptions([
-                `-vf scale=${resolution.width}:${resolution.height}`, // Redimensionar para a resolução desejada
+                `-vf scale=${resolution.width}:${resolution.height}`, // Scale to desired resolution
                 "-c:v libx264",
                 "-preset fast",
                 "-crf 23",
@@ -124,12 +88,12 @@ async function generateHLS_fMP4(inputFile, outputFolder) {
                 "-f hls",
                 "-hls_time 10",
                 "-hls_list_size 0",
-                "-hls_segment_type fmp4", // Usa fMP4 ao invés de TS
-                `-hls_fmp4_init_filename init_${resolution.label}.mp4`, // Arquivo de inicialização
+                "-hls_segment_type fmp4", // Use fMP4 instead of TS
+                `-hls_fmp4_init_filename init_${resolution.label}.mp4`, // Initialization file
                 `-hls_segment_filename ${segmentFile}`,
-                "-movflags +faststart", // Otimização para streaming
+                "-movflags +faststart", // Optimization for streaming
                 "-map 0:v:0",
-                "-map 0:a:0?", // ? torna opcional
+                "-map 0:a:0?", // ? makes optional
                 "-map 0:a:1?",
                 "-map 0:a:2?",
                 "-map 0:a:3?",
@@ -137,36 +101,15 @@ async function generateHLS_fMP4(inputFile, outputFolder) {
                 "-map 0:a:5?",
               ])
               .output(outputFile)
-              .on("start", (commandLine) => {
-                console.log(`Comando FFmpeg iniciado para ${resolution.label}`);
-                console.log(`   Comando: ${commandLine.substring(0, 100)}...`);
-              })
-              .on("progress", (progress) => {
-                if (progress.percent) {
-                  const percent = Math.round(progress.percent);
-                  console.log(
-                    `${resolution.label}: ${percent}% concluído (${
-                      progress.currentFps || 0
-                    } fps)`
-                  );
-                }
-              })
+              .on("start", () => {})
+              .on("progress", () => {})
               .on("end", () => {
-                const endTime = Date.now();
-                const duration = Math.round((endTime - startTime) / 1000);
                 processedCount++;
-
-                console.log(
-                  `${resolution.label} processado com sucesso! (${duration}s)`
-                );
-                console.log(
-                  `Progresso geral: ${processedCount}/${totalResolutions} resoluções concluídas`
-                );
                 resolve2();
               })
               .on("error", (err) => {
                 console.error(
-                  `Erro durante o processamento para ${resolution.label}: ${err.message}`
+                  `Error processing ${resolution.label}: ${err.message}`
                 );
                 reject2(err);
               })
@@ -174,17 +117,12 @@ async function generateHLS_fMP4(inputFile, outputFolder) {
           });
         });
 
-        // Aguarda todos os vídeos serem gerados e cria o arquivo mestre M3U8
-        console.log("Aguardando conclusão de todas as resoluções...");
+        // Wait for all videos to be generated and create master M3U8 file
         const startTime = Date.now();
         Promise.all(videoStreams)
           .then(() => {
             const totalTime = Math.round((Date.now() - startTime) / 1000);
-            console.log(
-              `Todas as resoluções processadas com sucesso! (Tempo total: ${totalTime}s)`
-            );
-            console.log("Criando arquivo mestre M3U8...");
-            // Estimativas de largura de banda, average bandwidth, codecs e frame-rate para cada resolução
+            // Bandwidth estimates, average bandwidth, codecs and frame-rate for each resolution
             const resolutionInfo = {
               "1080p": {
                 bw: 4000000,
@@ -215,10 +153,10 @@ async function generateHLS_fMP4(inputFile, outputFolder) {
                 fr: 30,
               },
             };
-            // Cabeçalho sem grupo de áudio
+            // Header without audio group
             let masterFileContent =
-              "#EXTM3U\n#EXT-X-VERSION:6\n## Gerado por express-hls-example\n\n# variants\n";
-            // Variants (apenas vídeo+áudio juntos)
+              "#EXTM3U\n#EXT-X-VERSION:6\n## Generated by express-hls-example\n\n# variants\n";
+            // Variants (video+audio together only)
             masterFileContent +=
               validResolutions
                 .map((resolution) => {
@@ -226,43 +164,21 @@ async function generateHLS_fMP4(inputFile, outputFolder) {
                   return `#EXT-X-STREAM-INF:BANDWIDTH=${info.bw},AVERAGE-BANDWIDTH=${info.avg},CODECS=\"${info.codecs}\",RESOLUTION=${info.res},FRAME-RATE=${info.fr},CLOSED-CAPTIONS=NONE\noutput_${resolution.label}.m3u8`;
                 })
                 .join("\n") + "\n";
-            // Cria o arquivo mestre M3U8
+            // Create master M3U8 file
             const masterFile = path.join(outputVideoFolder, "master.m3u8");
             fs.writeFileSync(masterFile, masterFileContent);
-            console.log("Arquivo mestre M3U8 gerado com sucesso!");
-            console.log(`Arquivo criado: ${masterFile}`);
-            console.log(
-              "Processo de conversão HLS (fMP4) concluído com sucesso!"
-            );
-            console.log(`Estatísticas finais:`);
-            console.log(
-              `   Resoluções processadas: ${validResolutions.length}`
-            );
-            console.log(`   Tempo total: ${totalTime}s`);
-            console.log(`   Formato: fMP4 (Fragmented MP4)`);
-            console.log(`   Pasta de saída: ${outputVideoFolder}`);
-            console.log("Vantagens do fMP4:");
-            console.log("   Melhor compatibilidade com navegadores modernos");
-            console.log(
-              "   Suporte a recursos avançados (CMAF, Low-Latency HLS)"
-            );
-            console.log("   Melhor integração com DRM");
             resolve();
           })
           .catch((err) => {
             console.error(
-              "Erro durante a criação dos arquivos de vídeo HLS:",
+              "Error creating HLS video files:",
               err.message
-            );
-            console.error(
-              "Verifique se o arquivo de entrada existe e está acessível"
             );
             reject(err);
           });
       } else {
-        console.error("Fluxo de vídeo não encontrado nos metadados");
-        console.log("Verifique se o arquivo é um vídeo válido");
-        reject(new Error("Fluxo de vídeo não encontrado nos metadados"));
+        console.error("Video stream not found in metadata");
+        reject(new Error("Video stream not found in metadata"));
       }
     });
   });

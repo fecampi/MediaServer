@@ -13,39 +13,37 @@ const { Database } = require("../src/database/Database");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Inicializar o banco de dados
+// Initialize database
 const databasePath = path.join(__dirname, "..", "database.json");
 const db = new Database(databasePath);
 
-// Configuração do EJS
+// EJS configuration
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// Middleware para servir arquivos estáticos da pasta dist
+// Middleware to serve static files from dist folder
 const distDir = path.join(__dirname, "..", "dist");
 app.use("/public", express.static(path.join(distDir, "public")));
 app.use("/hls", express.static(path.join(distDir, "hls")));
 app.use("/uploads", express.static(path.join(distDir, "uploads")));
 
-// Middleware para parsing de JSON e URL encoded
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middleware for parsing JSON and URL encoded
+app.use(express.json({ limit: "500mb" }));
+app.use(express.urlencoded({ extended: true, limit: "500mb" }));
 
-// Função utilitária para adicionar vídeo ao banco e responder
+// Utility function to add video to database and respond
 async function addVideoAndRespond(res, videoInfo, inputPath) {
   try {
     const savedVideo = await db.insert("videos", [videoInfo]);
     if (inputPath) fs.unlink(inputPath, () => {});
     return res.json({ success: true, video: savedVideo });
   } catch (error) {
-    console.error("Erro ao salvar vídeo no banco:", error);
-    return res
-      .status(500)
-      .json({ error: "Erro ao salvar vídeo no banco de dados" });
+    console.error("Error saving video to database:", error);
+    return res.status(500).json({ error: "Error saving video to database" });
   }
 }
 
-// Função genérica para upload HLS (TS ou fMP4)
+// Generic function for HLS upload (TS or fMP4)
 async function handleHLSUpload(req, res, format) {
   if (!req.file)
     return res.status(400).json({ error: "Nenhum arquivo enviado" });
@@ -57,22 +55,24 @@ async function handleHLSUpload(req, res, format) {
 
     await generateHLSUnified(inputPath, outputDir, {
       format,
-      onEvent: (event) => {
-        console.log(`[${event.type}]`, event.data);
-      },
+      onEvent: () => {},
     });
 
     const videoInfo = {
       id: videoId,
       originalName: req.file.originalname,
       hlsUrl: `/hls/${videoId}/master.m3u8`,
-      segmentType: format === "ts" ? "ts" : "mp4",
+      segmentType: format === "ts" ? "ts" : "fmp4",
       uploadDate: new Date().toISOString(),
     };
 
     return await addVideoAndRespond(res, videoInfo, inputPath);
   } catch (err) {
-    return res.status(500).json({ error: `Erro ao converter vídeo para ${format === "ts" ? "TS" : "fMP4"}.` });
+    return res
+      .status(500)
+      .json({
+        error: `Error converting video to ${format === "ts" ? "TS" : "fMP4"}.`,
+      });
   }
 }
 
@@ -95,15 +95,45 @@ app.post("/upload/original", upload.single("video"), async (req, res) => {
   }
 });
 
-app.post("/upload/:format", upload.single("video"), (req, res) => {
+app.post("/upload/:format", upload.single("video"), async (req, res) => {
   const format = req.params.format;
   if (format !== "ts" && format !== "fmp4") {
     return res.status(400).json({ error: "Formato inválido" });
   }
-  return handleHLSUpload(req, res, format);
+
+  // Conteúdo movido de handleHLSUpload
+  if (!req.file)
+    return res.status(400).json({ error: "Nenhum arquivo enviado" });
+
+  try {
+    const { path: inputPath, filename } = await saveUploadToDisk(req.file);
+    const videoId = path.parse(filename).name;
+    const outputDir = path.join(__dirname, "..", "dist", "hls", videoId);
+
+    await generateHLSUnified(inputPath, outputDir, {
+      format,
+      onEvent: () => {},
+    });
+
+    const videoInfo = {
+      id: videoId,
+      originalName: req.file.originalname,
+      hlsUrl: `/hls/${videoId}/master.m3u8`,
+      segmentType: format,
+      uploadDate: new Date().toISOString(),
+    };
+
+    return await addVideoAndRespond(res, videoInfo, inputPath);
+  } catch (err) {
+    return res
+      .status(500)
+      .json({
+        error: `Error converting video to ${format === "ts" ? "TS" : "fMP4"}.`,
+      });
+  }
 });
 
-// Rotas de captura HLS separadas por formato
+// Separate HLS capture routes by format
 app.post("/capture/original", async (req, res) => {
   const { url, duration } = req.body;
   if (!url) {
@@ -195,20 +225,20 @@ app.post("/capture/fmp4", async (req, res) => {
     });
   }
 });
-// Rota principal
+// Main route
 app.get("/", async (req, res) => {
   try {
-    // Busca todos os vídeos do banco de dados
+    // Fetch all videos from database
     const videos = await db.select("videos");
 
-    // Monta a base da URL (protocolo, host, porta)
+    // Build base URL (protocol, host, port)
     const baseUrl =
       req.protocol +
       "://" +
       req.hostname +
       (req.socket.localPort ? ":" + req.socket.localPort : "");
 
-    // Adiciona a url completa em cada vídeo
+    // Add full URL to each video
     const videosWithFullUrl = videos.map((v) => ({
       ...v,
       fullUrl: baseUrl + v.hlsUrl,
@@ -216,12 +246,34 @@ app.get("/", async (req, res) => {
 
     res.render("index", { videos: videosWithFullUrl });
   } catch (error) {
-    console.error("Erro ao buscar vídeos:", error);
+    console.error("Error fetching videos:", error);
     res.render("index", { videos: [] });
   }
 });
 
-// Rota para servir segmentos .ts com headers corretos
+app.get("/capture", (req, res) => {
+  res.render("capture");
+});
+
+app.get("/upload", (req, res) => {
+  res.render("upload", { videos: [] });
+});
+
+app.get("/videos", (req, res) => {
+  res.render("videos", { videos: [] });
+});
+
+app.get("/videos", async (req, res) => {
+  try {
+    const videos = await db.select("videos");
+    res.render("videos", { videos });
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    res.render("videos", { videos: [] });
+  }
+});
+
+// Route to serve .ts segments with correct headers
 app.get("/hls/:id/*.ts", (req, res) => {
   const filePath = path.join(
     __dirname,
@@ -239,7 +291,7 @@ app.get("/hls/:id/*.ts", (req, res) => {
   res.sendFile(filePath);
 });
 
-// Rotas API para gerenciar vídeos
+// API routes to manage videos
 app.get("/api/videos", async (req, res) => {
   try {
     const videos = await db.select("videos");
@@ -265,14 +317,13 @@ app.delete("/api/videos/:id", async (req, res) => {
   try {
     const video = await db.findById("videos", req.params.id);
     if (!video) {
-      console.log("[DELETE] Vídeo não encontrado no banco");
       return res.status(404).json({ error: "Vídeo não encontrado no banco" });
     }
 
     let fileFound = false;
     let fileDeleteError = null;
 
-    // Verifica e apaga arquivo original (uploads ou dist/uploads)
+    // Check and delete original file (uploads or dist/uploads)
     if (
       video.segmentType === "original" &&
       video.hlsUrl.startsWith("/uploads/")
@@ -292,7 +343,7 @@ app.delete("/api/videos/:id", async (req, res) => {
         }
       }
     }
-    // Verifica e apaga pasta HLS se for TS ou fMP4
+    // Check and delete HLS folder if TS or fMP4
     if (
       (video.segmentType === "ts" || video.segmentType === "mp4") &&
       video.hlsUrl.startsWith("/hls/")
@@ -323,12 +374,12 @@ app.delete("/api/videos/:id", async (req, res) => {
     }
     res.json({ success: true, message: "Vídeo deletado com sucesso" });
   } catch (error) {
-    console.error("[DELETE] Erro inesperado:", error);
+    console.error("[DELETE] Unexpected error:", error);
     res.status(500).json({ error: "Erro ao deletar vídeo" });
   }
 });
 
-// Middleware de tratamento de erros
+// Error handling middleware
 app.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {
@@ -342,17 +393,13 @@ app.use((error, req, res, next) => {
     return res.status(400).json({ error: error.message });
   }
 
-  console.error("Erro:", error);
+  console.error("Error:", error);
   res.status(500).json({ error: "Erro interno do servidor" });
 });
 
-// Iniciar servidor
+// Start server
 app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-  console.log("Certifique-se de que o GStreamer está instalado no sistema!");
-  console.log(
-    "Para instalar no Ubuntu/Debian: sudo apt install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly"
-  );
+  console.log(`Server running at http://localhost:${PORT}`);
 });
 
 module.exports = app;

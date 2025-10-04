@@ -1,200 +1,224 @@
 # Media Server HLS
 
-Uma aplicação Node.js completa para upload, conversão e streaming de vídeos em formato HLS (HTTP Live Streaming).
+A complete Node.js application for uploading, converting, and streaming videos in HLS (HTTP Live Streaming) format.
 
-## 🚀 Funcionalidades
+## About this project
 
-- ✅ Upload de vídeos via interface web
-- ✅ Conversão automática para formato HLS usando GStreamer
-- ✅ Player HTML5 com suporte HLS.js
-- ✅ Interface moderna com Material-UI
-- ✅ Drag & Drop para upload
-- ✅ Streaming de vídeo otimizado
-- ✅ Suporte a múltiplos formatos de vídeo
+This repository is an experiment/proof of concept to study how an HLS streaming server works, including upload, conversion, and video management. The main goal is to learn about encoders, processing flow, and the structure of a media server.
 
-## 📋 Pré-requisitos
+> **Note:** I currently work professionally with streaming platforms and video players. This project is a personal experiment to deepen my understanding of the streaming pipeline, encoding, and delivery, beyond my daily work experience.
+
+This project is not intended for production, but for learning and exploring concepts such as:
+- Video upload and conversion
+- HLS playlist (.m3u8) and segment generation
+- Content ingest: inserting the video into the platform, ensuring file integrity and metadata consistency
+  - Encoding: converting the video to multiple resolutions and codecs, optimizing for different devices
+  - Metadata enrichment: adding detailed information to the video, manually or automatically
+- APIs and integrations:
+  - Video and metadata query API
+  - Public interface for the player
+- Delivery/Distribution:
+  - Dynamic packaging with HLS protocol
+
+## 🚀 Features
+
+- ✅ Video upload via web interface
+- ✅ Automatic conversion to HLS format using FFmpeg
+- ✅ HTML5 player with HLS.js support
+- ✅ Modern interface with Material-UI
+- ✅ Drag & Drop for upload
+- ✅ Optimized video streaming
+- ✅ Support for multiple video formats
+
+## � Screenshots
+
+### Main Interface
+![Main Interface](images/main-interface.png)
+*The main page showing the upload area and video list.*
+
+### Video Upload
+![Video Upload](images/video-upload.png)
+*Drag & drop interface for uploading videos.*
+
+### Video Capture
+![Video Capture](images/video-capture.png)
+Capture a live HLS stream
+
+### Video List
+![Video List](images/video-list.png)
+*List of uploaded and converted videos with streaming URLs.*
+
+## �📋 Prerequisites
 
 ### 1. Node.js
-Certifique-se de ter o Node.js (versão 14 ou superior) instalado:
+Make sure you have Node.js (version 14 or higher) installed:
 ```bash
 node --version
 npm --version
 ```
 
-### 2. GStreamer
-O GStreamer é essencial para a conversão de vídeos para HLS.
+### 2. FFmpeg
+FFmpeg is essential for converting videos to HLS (fMP4) in this project. The binary is automatically installed via the npm dependency `@ffmpeg-installer/ffmpeg` and used by the `fluent-ffmpeg` package.
+
+You don't need to install FFmpeg manually, as the project should do this automatically via npm. However, if you prefer or need it for testing, you can install it globally using:
 
 #### Ubuntu/Debian:
 ```bash
 sudo apt update
-sudo apt install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav
+sudo apt install ffmpeg
 ```
 
 #### CentOS/RHEL/Fedora:
 ```bash
-sudo dnf install gstreamer1 gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugins-bad-free gstreamer1-plugins-ugly-free gstreamer1-libav
+sudo dnf install ffmpeg
 ```
 
-#### macOS (com Homebrew):
+#### macOS (with Homebrew):
 ```bash
-brew install gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav
+brew install ffmpeg
 ```
 
 #### Windows:
-1. Baixe o GStreamer em: https://gstreamer.freedesktop.org/download/
-2. Instale o "Complete" package
-3. Adicione o GStreamer ao PATH do sistema
+1. Download from: https://ffmpeg.org/download.html
+2. Extract and add the binary to your system PATH
 
-### 3. Verificar instalação do GStreamer
+> The project uses internally:
+> ```js
+> const ffmpeg = require("fluent-ffmpeg");
+> const ffmpegInstaller = require("@ffmpeg-installer/ffmpeg");
+> ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+> ```
+> So, it does not depend on GStreamer for HLS fMP4 conversion.
+
+### 3. Check FFmpeg installation
 ```bash
-gst-launch-1.0 --version
+ffmpeg -version
 ```
 
-## 🛠️ Instalação
+## 🛠️ Installation
 
-1. **Clone ou baixe o projeto:**
+1. **Clone or download the project:**
 ```bash
-# Se estiver em um repositório Git
+# If using a Git repository
 git clone <repository-url>
 cd MediaServer
-
-# Ou navegue até a pasta do projeto
-cd /home/fecamp/Projetos/Player/MediaServer
 ```
 
-2. **Instale as dependências:**
+2. **Install dependencies:**
 ```bash
 npm install
 ```
 
-3. **Inicie o servidor:**
+3. **Start the server:**
 ```bash
-# Modo produção
+# Production mode
 npm start
 
-# Modo desenvolvimento (com nodemon)
+# Development mode (with nodemon)
 npm run dev
 ```
 
-4. **Acesse a aplicação:**
-Abra seu navegador e vá para: http://localhost:3000
+4. **Access the application:**
+Open your browser and go to: http://localhost:3000
 
-## 📁 Estrutura do Projeto
+## 📁 Project Structure
 
 ```
 MediaServer/
-├── app.js              # Servidor principal Express
-├── package.json        # Configurações e dependências
-├── README.md          # Este arquivo
-├── uploads/           # Pasta temporária para uploads
-├── hls/              # Vídeos convertidos em HLS
-├── public/           # Arquivos estáticos
-│   └── styles.css    # Estilos adicionais
-└── views/            # Templates EJS
-    └── index.ejs     # Interface principal
+├── app.js              # Main Express server
+├── package.json        # Configurations and dependencies
+├── README.md           # This file
+├── uploads/            # Temporary upload folder
+├── hls/                # HLS converted videos
+├── public/             # Static files
+│   └── styles.css      # Additional styles
+└── views/              # EJS templates
+    └── index.ejs       # Main interface
 ```
 
-## 💻 Como Usar
+## 💻 How to Use
 
-1. **Upload de Vídeo:**
-   - Clique na área de upload ou arraste um arquivo
-   - Formatos suportados: MP4, AVI, MOV, WMV, FLV, WebM, MKV
-   - Tamanho máximo: 500MB
+1. **Video Upload:**
+   - Click the upload area or drag a file
+   - Supported formats: MP4, AVI, MOV, WMV, FLV, WebM, MKV
+   - Max size: 500MB
 
-2. **Conversão Automática:**
-   - O vídeo será automaticamente convertido para HLS
-   - O processo gera arquivos .m3u8 e segmentos .ts
+2. **Automatic Conversion:**
+   - The video will be automatically converted to HLS
+   - The process generates .m3u8 files and .ts segments
 
-3. **Reprodução:**
-   - Clique em "REPRODUZIR" em qualquer vídeo da lista
-   - O player suporta streaming adaptativo
-   - Funciona em todos os navegadores modernos
+3. **Playback:**
+   - Click "PLAY" on any video in the list
+   - The player supports adaptive streaming
+   - Works in all modern browsers
 
-## ⚙️ Configuração
+## ⚙️ Configuration
 
-### Porta do Servidor
-Altere a porta no arquivo `app.js` ou use variável de ambiente:
+### Server Port
+Change the port in `app.js` or use an environment variable:
 ```bash
 PORT=8080 npm start
 ```
 
-### Limites de Upload
-Modifique em `app.js`:
+### Upload Limits
+Edit in `app.js`:
 ```javascript
 limits: {
   fileSize: 500 * 1024 * 1024 // 500MB
 }
 ```
 
-### Configurações HLS
-Ajuste os parâmetros de conversão em `app.js`:
+### HLS Settings
+Adjust conversion parameters in `app.js`:
 ```javascript
 const gstCommand = [
-  // ... outros parâmetros
-  'target-duration=10',  // Duração dos segmentos
-  'max-files=0'         // Manter todos os segmentos
+  // ... other parameters
+  'target-duration=10',  // Segment duration
+  'max-files=0'         // Keep all segments
 ];
 ```
 
-## 🐛 Solução de Problemas
+## 🐛 Troubleshooting
 
-### Erro: "GStreamer não encontrado"
-- Verifique se o GStreamer está instalado: `gst-launch-1.0 --version`
-- No Linux: instale com apt/dnf como mostrado acima
-- No Windows: adicione o GStreamer ao PATH
+### Error: "FFmpeg not found"
+- Make sure FFmpeg is installed: `ffmpeg -version`
+- On Linux: install with apt/dnf as shown above
+- On Windows: add FFmpeg to your PATH
 
-### Erro: "Conversão falhou"
-- Verifique se o arquivo de vídeo não está corrompido
-- Tente com um formato diferente (MP4 é o mais confiável)
-- Verifique os logs do servidor no terminal
+### Error: "Conversion failed"
+- Check if the video file is not corrupted
+- Try a different format (MP4 is the most reliable)
+- Check the server logs in the terminal
 
-### Player não carrega vídeo
-- Verifique se o arquivo .m3u8 foi criado na pasta `hls/`
-- Teste em navegador diferente
-- Verifique o console do navegador para erros
+### Player does not load video
+- Check if the .m3u8 file was created in the `hls/` folder
+- Try a different browser
+- Check the browser console for errors
 
-### Problemas de permissão
+### Permission issues
 ```bash
 # Linux/macOS
 chmod -R 755 uploads/ hls/
 
-# Ou execute como sudo se necessário
+# Or run as sudo if needed
 sudo npm start
 ```
 
-## 🔧 Desenvolvimento
+## 🔧 Development
 
-### Scripts Disponíveis
+### Available Scripts
 ```bash
-npm start     # Inicia em produção
-npm run dev   # Inicia com nodemon (auto-reload)
+npm start     # Start in production
+npm run dev   # Start with nodemon (auto-reload)
 ```
 
-### Estrutura de Dados
-Os vídeos são armazenados em memória. Para produção, considere usar:
-- Banco de dados (MongoDB, PostgreSQL)
-- Storage em nuvem (AWS S3, Google Cloud)
+### Data Structure
+Videos are stored in memory. For production, consider using:
+- Database (MongoDB, PostgreSQL)
+- Cloud storage (AWS S3, Google Cloud)
 
-### Melhorias Sugeridas
-- [ ] Autenticação de usuários
-- [ ] Banco de dados persistente
-- [ ] Upload em chunks para arquivos grandes
-- [ ] Múltiplas qualidades de vídeo
-- [ ] Sistema de thumbnails
-- [ ] API REST completa
+## 📄 License
 
-## 📄 Licença
-
-MIT License - veja o arquivo LICENSE para detalhes.
-
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
+MIT License - see LICENSE file for details.
 
 ---
-
-**Desenvolvido com ❤️ usando Node.js, Express, GStreamer e Material-UI**
