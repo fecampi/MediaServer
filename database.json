@@ -1,3 +1,39 @@
 {
-  "videos": []
+  "videos": [
+    {
+      "id": "93461d2c-a488-43d0-b5cc-5b9510ae0daf",
+      "originalName": "demo1.mp4",
+      "hlsUrl": "/uploads/93461d2c-a488-43d0-b5cc-5b9510ae0daf.mp4",
+      "segmentType": "original",
+      "uploadDate": "2025-10-04T02:45:55.210Z"
+    },
+    {
+      "id": "0606a913-028f-4e0a-8322-ddd4b474a6f4",
+      "originalName": "demo1.mp4",
+      "hlsUrl": "/hls/0606a913-028f-4e0a-8322-ddd4b474a6f4/master.m3u8",
+      "segmentType": "ts",
+      "uploadDate": "2025-10-04T02:46:16.244Z"
+    },
+    {
+      "id": "d138558f-a194-4eaa-898a-672dbb6e0c18",
+      "originalName": "demo1.mp4",
+      "hlsUrl": "/uploads/d138558f-a194-4eaa-898a-672dbb6e0c18.mp4",
+      "segmentType": "original",
+      "uploadDate": "2025-10-04T02:46:19.771Z"
+    },
+    {
+      "id": "bdb77f4e-56de-4ce5-ad34-de371d43d253",
+      "originalName": "demo1.mp4",
+      "hlsUrl": "/hls/bdb77f4e-56de-4ce5-ad34-de371d43d253/master.m3u8",
+      "segmentType": "mp4",
+      "uploadDate": "2025-10-04T02:46:42.020Z"
+    },
+    {
+      "id": "72939245-cd60-4c87-8fa6-72783ba9a302",
+      "originalName": "demo1.mp4",
+      "hlsUrl": "/hls/72939245-cd60-4c87-8fa6-72783ba9a302/master.m3u8",
+      "segmentType": "ts",
+      "uploadDate": "2025-10-04T02:47:55.355Z"
+    }
+  ]
 }

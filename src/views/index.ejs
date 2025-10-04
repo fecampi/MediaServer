@@ -31,32 +31,32 @@
       }
 
       .container {
-        max-width: 1200px;
+        max-width: 1000px;
         margin: 0 auto;
-        padding: 20px;
+        padding: 2px;
       }
 
       .header {
         background: linear-gradient(135deg, #1976d2, #42a5f5);
         color: white;
-        padding: 2rem;
+        padding: 0.3rem;
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 0.3rem;
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
 
       .upload-section {
         background: white;
-        padding: 2rem;
+        padding: 0.3rem;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        margin-bottom: 2rem;
+        margin-bottom: 0.3rem;
       }
 
       .video-section {
         background: white;
-        padding: 2rem;
+        padding: 0.3rem;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
@@ -64,9 +64,9 @@
       .upload-area {
         border: 2px dashed #1976d2;
         border-radius: 8px;
-        padding: 2rem;
+        padding: 0.3rem;
         text-align: center;
-        margin-bottom: 1rem;
+        margin-bottom: 0.15rem;
         transition: all 0.3s ease;
         cursor: pointer;
       }
@@ -83,8 +83,8 @@
 
       .video-player {
         width: 100%;
-        max-width: 800px;
-        margin: 1rem auto;
+        max-width: 220px;
+        margin: 0.15rem auto;
         display: block;
         border-radius: 8px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -163,14 +163,20 @@
         background: linear-gradient(45deg, #1976d2, #42a5f5);
         color: white;
         border: none;
-        padding: 12px 24px;
+        padding: 10px 22px;
         border-radius: 4px;
         cursor: pointer;
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 500;
         text-transform: uppercase;
         transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      .header h1 {
+        font-size: 1rem;
+      }
+      h2 {
+        font-size: 0.9rem;
       }
 
       .btn:hover {
@@ -747,6 +753,9 @@
       function handleFileSelect() {
         const file = fileInput.files[0];
         if (file) {
+          // Limpa mensagem de erro/status ao selecionar novo arquivo
+          statusMessage.textContent = "";
+          statusMessage.style.display = "none";
           uploadArea.innerHTML = `
                     <i class="ri-checkbox-circle-line" style="font-size: 48px; color: #4caf50; margin-bottom: 1rem;"></i>
                     <p style="font-size: 18px; margin-bottom: 0.5rem;">File selected:</p>
@@ -794,7 +803,7 @@
         progressBar.style.display = "block";
         uploadBtn.disabled = true;
         uploadBtn.innerHTML =
-          '<i class="ri-loader-4-line" style="vertical-align: middle; margin-right: 8px;"></i>PROCESSING...';
+          '<i class="ri-loader-4-line" style="vertical-align: middle; margin-right: 8px;"></i>WAIT..';
         // Simulate progress
         let progress = 0;
         const progressInterval = setInterval(() => {
@@ -818,15 +827,7 @@
                 "Video successfully converted! You can watch it now.",
                 "success"
               );
-              addVideoToList(data.video);
-              resetUploadForm();
-              setTimeout(() => {
-                playVideo(
-                  data.video.hlsUrl,
-                  data.video.originalName,
-                  data.video.uploadDate
-                );
-              }, 1000);
+              window.location.reload();
             } else {
               showStatus(data.error || "Video upload error.", "error");
             }
@@ -845,16 +846,6 @@
               progressFill.style.width = "0%";
             }, 2000);
           });
-      }
-
-      function resetUploadForm() {
-        fileInput.value = "";
-        uploadArea.innerHTML = `
-                <i class="ri-upload-cloud-2-line" style="font-size: 48px; color: #1976d2; margin-bottom: 1rem;"></i>
-                <p style="font-size: 18px; margin-bottom: 0.5rem;">Click here or drag a video file</p>
-                <p style="color: #666; font-size: 14px;">Supported formats: MP4, AVI, MOV, WMV, FLV, WebM, MKV</p>
-                <p style="color: #666; font-size: 12px;">Max size: 500MB</p>
-            `;
       }
     </script>
   </body>

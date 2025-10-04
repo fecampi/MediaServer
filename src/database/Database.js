@@ -1,8 +1,8 @@
-const fs = require('fs');
-const path = require('path');
-const { randomUUID } = require('crypto');
-const low = require('lowdb');
-const FileSync = require('lowdb/adapters/FileSync');
+const fs = require("fs");
+const path = require("path");
+const { randomUUID } = require("crypto");
+const low = require("lowdb");
+const FileSync = require("lowdb/adapters/FileSync");
 
 class Database {
   #db;
@@ -27,42 +27,47 @@ class Database {
    * @returns {Promise<Array>} - Data from the specified table.
    */
   async select(table, search) {
-    let data = await this.#db.get(table).value() || [];
+    let data = (await this.#db.get(table).value()) || [];
 
     if (search) {
-      data = data.filter(row => {
+      data = data.filter((row) => {
         return Object.entries(search).some(([key, value]) => {
-          return row[key] && row[key].toLowerCase().includes(value.toLowerCase());
+          return (
+            row[key] && row[key].toLowerCase().includes(value.toLowerCase())
+          );
         });
       });
     }
     return data;
   }
 
-/**
- * Inserts data into the specified table.
- * If the table doesn't exist, it creates the table first.
- * If the data is an array of objects, all objects will be inserted.
- * @param {string} table - Name of the table.
- * @param {Object|Array<Object>} data - Data or array of objects to be inserted into the table.
- * @returns {Promise<Object|Array<Object>>} - Data or array of objects inserted into the table.
- */
-async insert(table, data) {
-  const tableExists = await this.#db.has(table).value();
-  if (!tableExists) {
-    await this.#db.set(table, []).write();
-  }
+  /**
+   * Inserts data into the specified table.
+   * If the table doesn't exist, it creates the table first.
+   * If the data is an array of objects, all objects will be inserted.
+   * @param {string} table - Name of the table.
+   * @param {Object|Array<Object>} data - Data or array of objects to be inserted into the table.
+   * @returns {Promise<Object|Array<Object>>} - Data or array of objects inserted into the table.
+   */
+  async insert(table, data) {
+    const tableExists = await this.#db.has(table).value();
+    if (!tableExists) {
+      await this.#db.set(table, []).write();
+    }
 
-  if (Array.isArray(data)) {
-    const newDataArray = data.map(item => ({ id: randomUUID(), ...item }));
-    await this.#db.get(table).push(...newDataArray).write();
-    return newDataArray;
-  } else {
-    const newData = { id: randomUUID(), ...data };
-    await this.#db.get(table).push(newData).write();
-    return newData;
+    if (Array.isArray(data)) {
+      const newDataArray = data.map((item) => ({ id: randomUUID(), ...item }));
+      await this.#db
+        .get(table)
+        .push(...newDataArray)
+        .write();
+      return newDataArray;
+    } else {
+      const newData = { id: randomUUID(), ...data };
+      await this.#db.get(table).push(newData).write();
+      return newData;
+    }
   }
-}
 
   /**
    * Updates data in the specified table by ID.
@@ -90,6 +95,17 @@ async insert(table, data) {
     await this.#db.get(table).remove({ id }).write();
     const after = await this.#db.get(table).value().length;
     return after < before;
+  }
+
+  /**
+   * Finds a record by ID in the specified table.
+   * @param {string} table - Name of the table.
+   * @param {string} id - ID to search for.
+   * @returns {Promise<Object|null>} - The found record or null.
+   */
+  async findById(table, id) {
+    const row = await this.#db.get(table).find({ id }).value();
+    return row || null;
   }
 
   /**
