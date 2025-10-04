@@ -7,9 +7,14 @@ const { generateHLS } = require('./services/hls-generator-ts');
 const { generateHLS_fMP4 } = require('./services/hls-generator-fmp4');
 const { saveUploadToDisk } = require('./services/save-upload');
 const upload = require('./utils/multer');
+const { Database } = require('../src/database/Database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Inicializar o banco de dados
+const databasePath = path.join(__dirname, '..', 'database.json');
+const db = new Database(databasePath);
 
 // Configuração do EJS
 app.set('view engine', 'ejs');
@@ -25,18 +30,16 @@ app.use('/uploads', express.static(path.join(distDir, 'uploads')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-
-
-// Lista de vídeos convertidos (em produção, usar banco de dados)
-let convertedVideos = [];
-// Função utilitária para filtrar vídeos por tipo
-
-// Rotas de upload separadas
-function addVideoAndRespond(res, videoInfo, inputPath) {
-  convertedVideos.push(videoInfo);
-  if (inputPath) fs.unlink(inputPath, () => {});
-  return res.json({ success: true, video: videoInfo });
+// Função utilitária para adicionar vídeo ao banco e responder
+async function addVideoAndRespond(res, videoInfo, inputPath) {
+  try {
+    const savedVideo = await db.insert('videos', [videoInfo]);
+    if (inputPath) fs.unlink(inputPath, () => {});
+    return res.json({ success: true, video: savedVideo });
+  } catch (error) {
+    console.error('Erro ao salvar vídeo no banco:', error);
+    return res.status(500).json({ error: 'Erro ao salvar vídeo no banco de dados' });
+  }
 }
 
 app.post('/upload/original', upload.single('video'), async (req, res) => {
@@ -51,7 +54,7 @@ app.post('/upload/original', upload.single('video'), async (req, res) => {
       segmentType: 'original',
       uploadDate: new Date().toISOString()
     };
-    return addVideoAndRespond(res, videoInfo);
+    return await addVideoAndRespond(res, videoInfo);
   } catch (err) {
     return res.status(500).json({ error: 'Erro ao salvar vídeo original.' });
   }
@@ -71,7 +74,7 @@ app.post('/upload/ts', upload.single('video'), async (req, res) => {
       segmentType: 'ts',
       uploadDate: new Date().toISOString()
     };
-    return addVideoAndRespond(res, videoInfo, inputPath);
+    return await addVideoAndRespond(res, videoInfo, inputPath);
   } catch (err) {
     return res.status(500).json({ error: 'Erro ao converter vídeo para TS.' });
   }
@@ -91,7 +94,7 @@ app.post('/upload/fmp4', upload.single('video'), async (req, res) => {
       segmentType: 'mp4',
       uploadDate: new Date().toISOString()
     };
-    return addVideoAndRespond(res, videoInfo, inputPath);
+    return await addVideoAndRespond(res, videoInfo, inputPath);
   } catch (err) {
     return res.status(500).json({ error: 'Erro ao converter vídeo para fMP4.' });
   }
@@ -114,8 +117,8 @@ app.post('/capture/original', async (req, res) => {
       segmentType: 'original',
       uploadDate: new Date().toISOString()
     };
-    convertedVideos.push(videoInfo);
-    return res.json({ success: true, video: videoInfo });
+    const savedVideo = await db.insert('videos', [videoInfo]);
+    return res.json({ success: true, video: savedVideo });
   } catch (err) {
     return res.status(500).json({ success: false, error: 'Erro ao capturar stream: ' + err.message });
   }
@@ -141,8 +144,8 @@ app.post('/capture/ts', async (req, res) => {
       uploadDate: new Date().toISOString()
     };
     fs.unlink(originalFilePath, () => {});
-    convertedVideos.push(videoInfo);
-    return res.json({ success: true, video: videoInfo });
+    const savedVideo = await db.insert('videos', [videoInfo]);
+    return res.json({ success: true, video: savedVideo });
   } catch (err) {
     return res.status(500).json({ success: false, error: 'Erro ao capturar/converter stream TS: ' + err.message });
   }
@@ -168,22 +171,32 @@ app.post('/capture/fmp4', async (req, res) => {
       uploadDate: new Date().toISOString()
     };
     fs.unlink(originalFilePath, () => {});
-    convertedVideos.push(videoInfo);
-    return res.json({ success: true, video: videoInfo });
+    const savedVideo = await db.insert('videos', [videoInfo]);
+    return res.json({ success: true, video: savedVideo });
   } catch (err) {
     return res.status(500).json({ success: false, error: 'Erro ao capturar/converter stream fMP4: ' + err.message });
   }
 });
 // Rota principal
-app.get('/', (req, res) => {
-  // Monta a base da URL (protocolo, host, porta)
-  const baseUrl = req.protocol + '://' + req.hostname + (req.socket.localPort ? ':' + req.socket.localPort : '');
-  // Adiciona a url completa em cada vídeo
-  const videosWithFullUrl = convertedVideos.map(v => ({
-    ...v,
-    fullUrl: baseUrl + v.hlsUrl
-  }));
-  res.render('index', { videos: videosWithFullUrl });
+app.get('/', async (req, res) => {
+  try {
+    // Busca todos os vídeos do banco de dados
+    const videos = await db.select('videos');
+    
+    // Monta a base da URL (protocolo, host, porta)
+    const baseUrl = req.protocol + '://' + req.hostname + (req.socket.localPort ? ':' + req.socket.localPort : '');
+    
+    // Adiciona a url completa em cada vídeo
+    const videosWithFullUrl = videos.map(v => ({
+      ...v,
+      fullUrl: baseUrl + v.hlsUrl
+    }));
+    
+    res.render('index', { videos: videosWithFullUrl });
+  } catch (error) {
+    console.error('Erro ao buscar vídeos:', error);
+    res.render('index', { videos: [] });
+  }
 });
 
 
@@ -199,6 +212,80 @@ app.get('/hls/:id/*.ts', (req, res) => {
   res.setHeader('Content-Type', 'video/mp2t');
   res.setHeader('Cache-Control', 'public, max-age=31536000');
   res.sendFile(filePath);
+});
+
+// Rotas API para gerenciar vídeos
+app.get('/api/videos', async (req, res) => {
+  try {
+    const videos = await db.select('videos');
+    res.json(videos);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar vídeos' });
+  }
+});
+
+app.get('/api/videos/:id', async (req, res) => {
+  try {
+    const video = await db.findById('videos', req.params.id);
+    if (!video) {
+      return res.status(404).json({ error: 'Vídeo não encontrado' });
+    }
+    res.json(video);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar vídeo' });
+  }
+});
+
+app.delete('/api/videos/:id', async (req, res) => {
+  try {
+    const video = await db.findById('videos', req.params.id);
+    if (!video) {
+      return res.status(404).json({ error: 'Vídeo não encontrado no banco' });
+    }
+
+    let fileFound = false;
+    let fileDeleteError = null;
+
+    // Verifica e apaga arquivo original (uploads)
+    if (video.segmentType === 'original' && video.hlsUrl.startsWith('/uploads/')) {
+      const filePath = path.join(__dirname, '..', video.hlsUrl);
+      if (fs.existsSync(filePath)) {
+        fileFound = true;
+        try {
+          fs.unlinkSync(filePath);
+        } catch (err) {
+          fileDeleteError = err;
+        }
+      }
+    }
+    // Verifica e apaga pasta HLS se for TS ou fMP4
+    if ((video.segmentType === 'ts' || video.segmentType === 'mp4') && video.hlsUrl.startsWith('/hls/')) {
+      const hlsDir = path.join(__dirname, '..', 'dist', 'hls', video.id);
+      if (fs.existsSync(hlsDir)) {
+        fileFound = true;
+        try {
+          fs.rmSync(hlsDir, { recursive: true, force: true });
+        } catch (err) {
+          fileDeleteError = err;
+        }
+      }
+    }
+
+    if (!fileFound) {
+      return res.status(404).json({ error: 'Arquivos do vídeo não encontrados' });
+    }
+    if (fileDeleteError) {
+      return res.status(500).json({ error: 'Erro ao apagar arquivos do vídeo', details: fileDeleteError.message });
+    }
+
+    const deleted = await db.delete('videos', req.params.id);
+    if (!deleted) {
+      return res.status(500).json({ error: 'Erro ao remover vídeo do banco de dados' });
+    }
+    res.json({ success: true, message: 'Vídeo deletado com sucesso' });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao deletar vídeo' });
+  }
 });
 
 // Middleware de tratamento de erros

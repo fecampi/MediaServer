@@ -215,7 +215,7 @@
           ></i>
           Media Server HLS
         </h1>
-  <p>Capture or upload videos to stream below</p>
+        <p>Capture or upload videos to stream below</p>
       </div>
 
       <div
@@ -230,8 +230,10 @@
           Capture HLS Stream
         </h2>
         <form id="captureForm">
-          <div style="margin-bottom: 1rem; margin-left: 0; margin-right: 0;">
-            <label for="captureUrl" style="font-weight: 500; color: #222;">HLS Manifest URL (.m3u8)</label>
+          <div style="margin-bottom: 1rem; margin-left: 0; margin-right: 0">
+            <label for="captureUrl" style="font-weight: 500; color: #222"
+              >HLS Manifest URL (.m3u8)</label
+            >
             <input
               type="text"
               id="captureUrl"
@@ -250,9 +252,18 @@
               "
             />
           </div>
-          <div style="display: flex; gap: 1.5rem; align-items: flex-end; margin-bottom: 1rem;">
-            <div style="flex: 1 1 180px; min-width: 160px;">
-              <label for="captureDuration" style="font-weight: 500; color: #222">Capture Duration</label>
+          <div
+            style="
+              display: flex;
+              gap: 1.5rem;
+              align-items: flex-end;
+              margin-bottom: 1rem;
+            "
+          >
+            <div style="flex: 1 1 180px; min-width: 160px">
+              <label for="captureDuration" style="font-weight: 500; color: #222"
+                >Capture Duration</label
+              >
               <select
                 id="captureDuration"
                 name="captureDuration"
@@ -275,8 +286,10 @@
                 <option value="all">Full</option>
               </select>
             </div>
-            <div style="flex: 1 1 180px; min-width: 160px;">
-              <label for="captureFormat" style="font-weight: 500; color: #222">Format</label>
+            <div style="flex: 1 1 180px; min-width: 160px">
+              <label for="captureFormat" style="font-weight: 500; color: #222"
+                >Format</label
+              >
               <select
                 id="captureFormat"
                 name="captureFormat"
@@ -296,7 +309,7 @@
                 <option value="fmp4">HLS fMP4 (.mp4)</option>
               </select>
             </div>
-            <div style="flex: 0 1 160px; min-width: 120px; text-align: right;">
+            <div style="flex: 0 1 160px; min-width: 120px; text-align: right">
               <button
                 type="submit"
                 class="btn"
@@ -353,9 +366,20 @@
             accept="video/*"
             class="file-input"
           />
-          <div style="display: flex; gap: 1.5rem; align-items: flex-end; margin: 1rem 0;">
-            <div style="flex: 1 1 220px; min-width: 180px;">
-              <label for="formatSelect" style="font-weight: 500; margin-right: 0.5rem; color: #222">Output format:</label>
+          <div
+            style="
+              display: flex;
+              gap: 1.5rem;
+              align-items: flex-end;
+              margin: 1rem 0;
+            "
+          >
+            <div style="flex: 1 1 220px; min-width: 180px">
+              <label
+                for="formatSelect"
+                style="font-weight: 500; margin-right: 0.5rem; color: #222"
+                >Output format:</label
+              >
               <select
                 id="formatSelect"
                 name="format"
@@ -375,10 +399,21 @@
                 <option value="fmp4">HLS fMP4 (.mp4)</option>
               </select>
             </div>
-            <div style="flex: 0 1 160px; min-width: 120px; text-align: right;">
-              <button type="submit" class="btn" id="uploadBtn"
-                style="min-width: 120px; background: linear-gradient(45deg, #1976d2, #42a5f5); color: #fff;">
-                <i class="ri-upload-2-line" style="vertical-align: middle; margin-right: 8px"></i>
+            <div style="flex: 0 1 160px; min-width: 120px; text-align: right">
+              <button
+                type="submit"
+                class="btn"
+                id="uploadBtn"
+                style="
+                  min-width: 120px;
+                  background: linear-gradient(45deg, #1976d2, #42a5f5);
+                  color: #fff;
+                "
+              >
+                <i
+                  class="ri-upload-2-line"
+                  style="vertical-align: middle; margin-right: 8px"
+                ></i>
                 UPLOAD
               </button>
             </div>
@@ -412,7 +447,7 @@
               margin-top: 1rem;
               border-radius: 8px;
               overflow: hidden;
-              box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+              box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);
               border: 1.5px solid #e0e0e0;
               background: #fff;
             "
@@ -464,7 +499,15 @@
                 >
                   Stream URL
                 </th>
-                <!-- Coluna Actions removida -->
+                <th
+                  style="
+                    padding: 8px;
+                    border-bottom: 1px solid #ddd;
+                    text-align: left;
+                  "
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody id="videoList">
@@ -529,7 +572,81 @@
                 >
                   <%= video.fullUrl %>
                 </td>
-                <!-- Coluna Actions removida -->
+                <td style="padding: 8px; min-width: 120px; text-align: left">
+                  <button
+                    class="btn btn-action btn-copy"
+                    style="
+                      background: #42a5f5;
+                      margin-right: 8px;
+                      padding: 6px 12px;
+                      font-size: 13px;
+                    "
+                    onclick="copyUrl('<%= video.fullUrl %>')"
+                  >
+                    <i
+                      class="ri-file-copy-line"
+                      style="vertical-align: middle; margin-right: 4px"
+                    ></i
+                    >Copy URL
+                  </button>
+                  <button
+                    class="btn btn-action btn-delete"
+                    style="
+                      background: #f44336;
+                      padding: 6px 12px;
+                      font-size: 13px;
+                    "
+                    onclick="deleteVideo('<%= video.id %>')"
+                  >
+                    <i
+                      class="ri-delete-bin-6-line"
+                      style="vertical-align: middle; margin-right: 4px"
+                    ></i
+                    >Delete
+                  </button>
+                </td>
+                <script>
+                  // ...existing code...
+
+                  // Função copiar URL
+                  function copyUrl(url) {
+                    navigator.clipboard.writeText(url).then(
+                      () => {
+                        showStatus("URL copied to clipboard!", "success");
+                      },
+                      () => {
+                        showStatus("Failed to copy URL.", "error");
+                      }
+                    );
+                  }
+
+                  // Função deletar vídeo
+                  async function deleteVideo(id) {
+                    if (!confirm("Are you sure you want to delete this video?"))
+                      return;
+                    try {
+                      const res = await fetch(`/api/videos/${id}`, {
+                        method: "DELETE",
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        showStatus("Video deleted successfully!", "success");
+                        // Remove da tabela
+                        const row = Array.from(
+                          document.querySelectorAll("#videoList tr")
+                        ).find((tr) => tr.innerHTML.includes(id));
+                        if (row) row.remove();
+                      } else {
+                        showStatus(
+                          data.error || "Error deleting video.",
+                          "error"
+                        );
+                      }
+                    } catch (err) {
+                      showStatus("Server error.", "error");
+                    }
+                  }
+                </script>
               </tr>
               <% }); %> <% } %>
             </tbody>
@@ -550,7 +667,8 @@
           const format = document.getElementById("captureFormat").value;
           if (!url) {
             captureStatus.style.display = "block";
-            captureStatus.textContent = "Please enter a valid HLS manifest URL.";
+            captureStatus.textContent =
+              "Please enter a valid HLS manifest URL.";
             captureStatus.style.color = "#c62828";
             return;
           }
@@ -561,7 +679,7 @@
             let captureUrl = "/capture/original";
             if (format === "ts") captureUrl = "/capture/ts";
             else if (format === "fmp4") captureUrl = "/capture/fmp4";
-            
+
             const res = await fetch(captureUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -572,7 +690,8 @@
               captureStatus.textContent = "Stream captured successfully!";
               captureStatus.style.color = "#2e7d32";
             } else {
-              captureStatus.textContent = data.error || "Error capturing stream.";
+              captureStatus.textContent =
+                data.error || "Error capturing stream.";
               captureStatus.style.color = "#c62828";
             }
           } catch (err) {
