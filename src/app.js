@@ -1,3 +1,4 @@
+const { downloadHLSSegment } = require('./services/downloadHLSSegment');
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -14,10 +15,11 @@ const PORT = process.env.PORT || 3000;
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware para servir arquivos estáticos
-app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use('/hls', express.static(path.join(__dirname, 'hls')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Middleware para servir arquivos estáticos da pasta dist
+const distDir = path.join(__dirname, '..', 'dist');
+app.use('/public', express.static(path.join(distDir, 'public')));
+app.use('/hls', express.static(path.join(distDir, 'hls')));
+app.use('/uploads', express.static(path.join(distDir, 'uploads')));
 
 // Middleware para parsing de JSON e URL encoded
 app.use(express.json());
@@ -29,12 +31,6 @@ app.use(express.urlencoded({ extended: true }));
 // Lista de vídeos convertidos (em produção, usar banco de dados)
 let convertedVideos = [];
 // Função utilitária para filtrar vídeos por tipo
-function filterVideosByType(type) {
-  if (type === 'original') return convertedVideos.filter(v => v.segmentType === 'original');
-  if (type === 'ts') return convertedVideos.filter(v => v.segmentType === 'ts');
-  if (type === 'fmp4' || type === 'mp4') return convertedVideos.filter(v => v.segmentType === 'mp4' || v.segmentType === 'fmp4');
-  return [];
-}
 
 // Rotas de upload separadas
 function addVideoAndRespond(res, videoInfo, inputPath) {
@@ -101,23 +97,82 @@ app.post('/upload/fmp4', upload.single('video'), async (req, res) => {
   }
 });
 
-// Rotas de captura/listagem separadas
-app.get('/capture/original', (req, res) => {
-  const baseUrl = req.protocol + '://' + req.hostname + (req.socket.localPort ? ':' + req.socket.localPort : '');
-  const videos = filterVideosByType('original').map(v => ({ ...v, fullUrl: baseUrl + v.hlsUrl }));
-  res.json({ videos });
+// Rotas de captura HLS separadas por formato
+app.post('/capture/original', async (req, res) => {
+  const { url, duration } = req.body;
+  if (!url) {
+    return res.status(400).json({ success: false, error: 'URL é obrigatória.' });
+  }
+  let dur = duration && duration !== 'all' ? parseInt(duration) : undefined;
+  try {
+    const originalFilePath = await downloadHLSSegment(url, 'original', dur);
+    const videoId = path.parse(originalFilePath).name;
+    const videoInfo = {
+      id: videoId,
+      originalName: path.basename(originalFilePath),
+      hlsUrl: `/uploads/${path.basename(originalFilePath)}`,
+      segmentType: 'original',
+      uploadDate: new Date().toISOString()
+    };
+    convertedVideos.push(videoInfo);
+    return res.json({ success: true, video: videoInfo });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: 'Erro ao capturar stream: ' + err.message });
+  }
 });
 
-app.get('/capture/ts', (req, res) => {
-  const baseUrl = req.protocol + '://' + req.hostname + (req.socket.localPort ? ':' + req.socket.localPort : '');
-  const videos = filterVideosByType('ts').map(v => ({ ...v, fullUrl: baseUrl + v.hlsUrl }));
-  res.json({ videos });
+app.post('/capture/ts', async (req, res) => {
+  const { url, duration } = req.body;
+  if (!url) {
+    return res.status(400).json({ success: false, error: 'URL é obrigatória.' });
+  }
+  let dur = duration && duration !== 'all' ? parseInt(duration) : undefined;
+  try {
+    const originalFilePath = await downloadHLSSegment(url, 'ts', dur);
+    const videoId = path.parse(originalFilePath).name;
+    const distDir = path.join(__dirname, '..', 'dist');
+    const outputDir = path.join(distDir, 'hls', videoId);
+    await generateHLS(originalFilePath, outputDir);
+    const videoInfo = {
+      id: videoId,
+      originalName: `captured_${videoId}.ts`,
+      hlsUrl: `/hls/${videoId}/master.m3u8`,
+      segmentType: 'ts',
+      uploadDate: new Date().toISOString()
+    };
+    fs.unlink(originalFilePath, () => {});
+    convertedVideos.push(videoInfo);
+    return res.json({ success: true, video: videoInfo });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: 'Erro ao capturar/converter stream TS: ' + err.message });
+  }
 });
 
-app.get('/capture/fmp4', (req, res) => {
-  const baseUrl = req.protocol + '://' + req.hostname + (req.socket.localPort ? ':' + req.socket.localPort : '');
-  const videos = filterVideosByType('fmp4').map(v => ({ ...v, fullUrl: baseUrl + v.hlsUrl }));
-  res.json({ videos });
+app.post('/capture/fmp4', async (req, res) => {
+  const { url, duration } = req.body;
+  if (!url) {
+    return res.status(400).json({ success: false, error: 'URL é obrigatória.' });
+  }
+  let dur = duration && duration !== 'all' ? parseInt(duration) : undefined;
+  try {
+    const originalFilePath = await downloadHLSSegment(url, 'fmp4', dur);
+    const videoId = path.parse(originalFilePath).name;
+    const distDir = path.join(__dirname, '..', 'dist');
+    const outputDir = path.join(distDir, 'hls', videoId);
+    await generateHLS_fMP4(originalFilePath, outputDir);
+    const videoInfo = {
+      id: videoId,
+      originalName: `captured_${videoId}.fmp4`,
+      hlsUrl: `/hls/${videoId}/master.m3u8`,
+      segmentType: 'mp4',
+      uploadDate: new Date().toISOString()
+    };
+    fs.unlink(originalFilePath, () => {});
+    convertedVideos.push(videoInfo);
+    return res.json({ success: true, video: videoInfo });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: 'Erro ao capturar/converter stream fMP4: ' + err.message });
+  }
 });
 // Rota principal
 app.get('/', (req, res) => {
@@ -131,69 +186,7 @@ app.get('/', (req, res) => {
   res.render('index', { videos: videosWithFullUrl });
 });
 
-// Rota para upload de vídeo com escolha de formato
-app.post('/upload', upload.single('video'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'Nenhum arquivo enviado' });
-  }
-  const { format } = req.body;
-  try {
-    // Salva o arquivo em disco usando o novo serviço
-    const { path: inputPath, filename } = await saveUploadToDisk(req.file);
-    const videoId = path.parse(filename).name;
-    if (format === 'original') {
-      // Apenas salva o arquivo, sem conversão
-      const videoInfo = {
-        id: videoId,
-        originalName: req.file.originalname,
-        hlsUrl: `/uploads/${filename}`,
-        segmentType: 'original',
-        uploadDate: new Date().toISOString()
-      };
-      convertedVideos.push(videoInfo);
-      console.log('Vídeo salvo sem conversão:', videoInfo);
-      return res.json({ success: true, video: videoInfo });
-    }
-    // Caso contrário, faz a conversão normalmente
-    const outputDir = path.join(__dirname, 'hls', videoId);
-    console.log(`Processando vídeo: ${req.file.originalname}`);
-    console.log(`Arquivo salvo em: ${inputPath}`);
-    console.log(`Output HLS: ${outputDir}`);
-    let segmentExt;
-    let generatorFn;
-    if (format === 'fmp4') {
-      segmentExt = 'mp4';
-      generatorFn = generateHLS_fMP4;
-    } else {
-      segmentExt = 'ts';
-      generatorFn = generateHLS;
-    }
-    await generatorFn(inputPath, outputDir);
-    const videoInfo = {
-      id: videoId,
-      originalName: req.file.originalname,
-      hlsUrl: `/hls/${videoId}/master.m3u8`,
-      segmentType: segmentExt,
-      uploadDate: new Date().toISOString()
-    };
-    convertedVideos.push(videoInfo);
-    console.log('Vídeo convertido com sucesso:', videoInfo);
-    fs.unlink(inputPath, (unlinkErr) => {
-      if (unlinkErr) {
-        console.error('Erro ao remover arquivo original:', unlinkErr);
-      } else {
-        console.log('Arquivo original removido:', inputPath);
-      }
-      if (!res.headersSent) res.redirect('/');
-    });
-    setTimeout(() => {
-      if (!res.headersSent) res.redirect('/');
-    }, 5000);
-  } catch (err) {
-    console.error('Erro na conversão:', err);
-    if (!res.headersSent) res.status(500).send('Erro ao converter o vídeo.');
-  }
-});
+
 
 // Rota para servir segmentos .ts com headers corretos
 app.get('/hls/:id/*.ts', (req, res) => {

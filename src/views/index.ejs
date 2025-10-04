@@ -215,7 +215,7 @@
           ></i>
           Media Server HLS
         </h1>
-        <p>Upload videos and watch HLS streaming</p>
+  <p>Capture or upload videos to stream below</p>
       </div>
 
       <div
@@ -229,19 +229,9 @@
           ></i>
           Capture HLS Stream
         </h2>
-        <form
-          id="captureForm"
-          style="
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            align-items: flex-end;
-          "
-        >
-          <div style="flex: 2 1 320px; min-width: 220px">
-            <label for="captureUrl" style="font-weight: 500; color: #222"
-              >HLS Manifest URL (.m3u8)</label
-            >
+        <form id="captureForm">
+          <div style="margin-bottom: 1rem; margin-left: 0; margin-right: 0;">
+            <label for="captureUrl" style="font-weight: 500; color: #222;">HLS Manifest URL (.m3u8)</label>
             <input
               type="text"
               id="captureUrl"
@@ -249,6 +239,7 @@
               placeholder="https://.../playlist.m3u8"
               style="
                 width: 100%;
+                box-sizing: border-box;
                 padding: 0.7rem 1rem;
                 border-radius: 4px;
                 border: 1px solid #ccc;
@@ -259,71 +250,69 @@
               "
             />
           </div>
-          <div style="flex: 1 1 180px; min-width: 160px">
-            <label for="captureDuration" style="font-weight: 500; color: #222"
-              >Capture Duration</label
-            >
-            <select
-              id="captureDuration"
-              name="captureDuration"
-              style="
-                width: 100%;
-                padding: 0.7rem 1rem;
-                border-radius: 4px;
-                border: 1px solid #ccc;
-                background: #f5f5f5;
-                color: #222;
-                font-size: 1rem;
-                margin-top: 0.3rem;
-              "
-            >
-              <option value="60">1 minute</option>
-              <option value="300">5 minutes</option>
-              <option value="600">10 minutes</option>
-              <option value="1800">30 minutes</option>
-              <option value="3600">1 hour</option>
-              <option value="all">Full</option>
-            </select>
-          </div>
-          <div style="flex: 1 1 180px; min-width: 160px">
-            <label for="captureFormat" style="font-weight: 500; color: #222"
-              >Format</label
-            >
-            <select
-              id="captureFormat"
-              name="captureFormat"
-              style="
-                width: 100%;
-                padding: 0.7rem 1rem;
-                border-radius: 4px;
-                border: 1px solid #ccc;
-                background: #f5f5f5;
-                color: #222;
-                font-size: 1rem;
-                margin-top: 0.3rem;
-              "
-            >
-              <option value="original">Original (no conversion)</option>
-              <option value="ts">HLS TS (.ts)</option>
-              <option value="fmp4">HLS fMP4 (.mp4)</option>
-            </select>
-          </div>
-          <div style="flex: 0 1 160px; min-width: 120px">
-            <button
-              type="submit"
-              class="btn"
-              style="
-                width: 100%;
-                background: linear-gradient(45deg, #1976d2, #42a5f5);
-                color: #fff;
-              "
-            >
-              <i
-                class="ri-download-2-line"
-                style="vertical-align: middle; margin-right: 8px"
-              ></i
-              >Capture
-            </button>
+          <div style="display: flex; gap: 1.5rem; align-items: flex-end; margin-bottom: 1rem;">
+            <div style="flex: 1 1 180px; min-width: 160px;">
+              <label for="captureDuration" style="font-weight: 500; color: #222">Capture Duration</label>
+              <select
+                id="captureDuration"
+                name="captureDuration"
+                style="
+                  width: 100%;
+                  padding: 0.7rem 1rem;
+                  border-radius: 4px;
+                  border: 1px solid #ccc;
+                  background: #f5f5f5;
+                  color: #222;
+                  font-size: 1rem;
+                  margin-top: 0.3rem;
+                "
+              >
+                <option value="60">1 minute</option>
+                <option value="300">5 minutes</option>
+                <option value="600">10 minutes</option>
+                <option value="1800">30 minutes</option>
+                <option value="3600">1 hour</option>
+                <option value="all">Full</option>
+              </select>
+            </div>
+            <div style="flex: 1 1 180px; min-width: 160px;">
+              <label for="captureFormat" style="font-weight: 500; color: #222">Format</label>
+              <select
+                id="captureFormat"
+                name="captureFormat"
+                style="
+                  width: 100%;
+                  padding: 0.7rem 1rem;
+                  border-radius: 4px;
+                  border: 1px solid #ccc;
+                  background: #f5f5f5;
+                  color: #222;
+                  font-size: 1rem;
+                  margin-top: 0.3rem;
+                "
+              >
+                <option value="original">Original (no conversion)</option>
+                <option value="ts">HLS TS (.ts)</option>
+                <option value="fmp4">HLS fMP4 (.mp4)</option>
+              </select>
+            </div>
+            <div style="flex: 0 1 160px; min-width: 120px; text-align: right;">
+              <button
+                type="submit"
+                class="btn"
+                style="
+                  min-width: 120px;
+                  background: linear-gradient(45deg, #1976d2, #42a5f5);
+                  color: #fff;
+                "
+              >
+                <i
+                  class="ri-download-2-line"
+                  style="vertical-align: middle; margin-right: 8px"
+                ></i>
+                Capture
+              </button>
+            </div>
           </div>
         </form>
         <div id="captureStatus" style="margin-top: 1.5rem; display: none"></div>
@@ -364,40 +353,40 @@
             accept="video/*"
             class="file-input"
           />
-          <div style="margin: 1rem 0; text-align: center">
-            <label
-              for="formatSelect"
-              style="font-weight: 500; margin-right: 0.5rem; color: #222"
-              >Output format:</label
-            >
-            <select
-              id="formatSelect"
-              name="format"
-              style="
-                padding: 0.5rem 1rem;
-                border-radius: 4px;
-                border: 1px solid #ccc;
-                font-size: 1rem;
-                background: #f5f5f5;
-                color: #222;
-              "
-            >
-              <option value="original">Original (no conversion)</option>
-              <option value="ts">HLS TS (.ts)</option>
-              <option value="fmp4">HLS fMP4 (.mp4)</option>
-            </select>
+          <div style="display: flex; gap: 1.5rem; align-items: flex-end; margin: 1rem 0;">
+            <div style="flex: 1 1 220px; min-width: 180px;">
+              <label for="formatSelect" style="font-weight: 500; margin-right: 0.5rem; color: #222">Output format:</label>
+              <select
+                id="formatSelect"
+                name="format"
+                style="
+                  padding: 0.5rem 1rem;
+                  border-radius: 4px;
+                  border: 1px solid #ccc;
+                  font-size: 1rem;
+                  background: #f5f5f5;
+                  color: #222;
+                  width: 100%;
+                  margin-top: 0.3rem;
+                "
+              >
+                <option value="original">Original (no conversion)</option>
+                <option value="ts">HLS TS (.ts)</option>
+                <option value="fmp4">HLS fMP4 (.mp4)</option>
+              </select>
+            </div>
+            <div style="flex: 0 1 160px; min-width: 120px; text-align: right;">
+              <button type="submit" class="btn" id="uploadBtn"
+                style="min-width: 120px; background: linear-gradient(45deg, #1976d2, #42a5f5); color: #fff;">
+                <i class="ri-upload-2-line" style="vertical-align: middle; margin-right: 8px"></i>
+                UPLOAD
+              </button>
+            </div>
           </div>
           <div class="progress-bar" id="progressBar">
             <div class="progress-fill" id="progressFill"></div>
           </div>
           <div class="status-message" id="statusMessage"></div>
-          <button type="submit" class="btn" id="uploadBtn">
-            <i
-              class="ri-upload-2-line"
-              style="vertical-align: middle; margin-right: 8px"
-            ></i>
-            UPLOAD
-          </button>
         </form>
       </div>
 
@@ -417,7 +406,16 @@
         <div style="overflow-x: auto">
           <table
             class="video-table"
-            style="width: 100%; border-collapse: collapse; margin-top: 1rem"
+            style="
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 1rem;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 2px 8px rgba(25, 118, 210, 0.10);
+              border: 1.5px solid #e0e0e0;
+              background: #fff;
+            "
           >
             <thead>
               <tr style="background: #f5f5f5">
@@ -552,8 +550,7 @@
           const format = document.getElementById("captureFormat").value;
           if (!url) {
             captureStatus.style.display = "block";
-            captureStatus.textContent =
-              "Please enter a valid HLS manifest URL.";
+            captureStatus.textContent = "Please enter a valid HLS manifest URL.";
             captureStatus.style.color = "#c62828";
             return;
           }
@@ -561,18 +558,21 @@
           captureStatus.textContent = "Capturing stream...";
           captureStatus.style.color = "#1976d2";
           try {
-            const res = await fetch("/capture", {
+            let captureUrl = "/capture/original";
+            if (format === "ts") captureUrl = "/capture/ts";
+            else if (format === "fmp4") captureUrl = "/capture/fmp4";
+            
+            const res = await fetch(captureUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ url, duration, format }),
+              body: JSON.stringify({ url, duration }),
             });
             const data = await res.json();
             if (data.success) {
               captureStatus.textContent = "Stream captured successfully!";
               captureStatus.style.color = "#2e7d32";
             } else {
-              captureStatus.textContent =
-                data.error || "Error capturing stream.";
+              captureStatus.textContent = data.error || "Error capturing stream.";
               captureStatus.style.color = "#c62828";
             }
           } catch (err) {

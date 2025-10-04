@@ -10,7 +10,7 @@ const { v4: uuidv4 } = require('uuid');
  */
 async function saveUploadToDisk(file) {
   if (!file) throw new Error('Arquivo não fornecido');
-  const uploadsDir = path.join(__dirname, '..', 'uploads');
+  const uploadsDir = path.join(__dirname, '..', '..', 'dist', 'uploads');
   if (!fs.existsSync(uploadsDir)) {
     await fsp.mkdir(uploadsDir, { recursive: true });
   }

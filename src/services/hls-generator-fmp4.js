@@ -13,6 +13,14 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 async function generateHLS_fMP4(inputFile, outputFolder) {
   console.log("🎬 Iniciando processo de conversão HLS (fMP4)...");
   console.log(`📁 Arquivo de entrada: ${inputFile}`);
+  // Força saída para dist/hls
+  const distHls = path.join(__dirname, '..', '..', 'dist', 'hls');
+  let finalOutputFolder = outputFolder;
+  if (!outputFolder.startsWith(distHls)) {
+    // Se não está em dist/hls, ajusta
+    const baseName = path.basename(outputFolder);
+    finalOutputFolder = path.join(distHls, baseName);
+  }
   return new Promise((resolve, reject) => {
     ffmpeg(inputFile).ffprobe((err, metadata) => {
       if (err) {
@@ -63,8 +71,7 @@ async function generateHLS_fMP4(inputFile, outputFolder) {
         );
 
         // Usa diretamente a pasta de saída informada
-        const outputVideoFolder = outputFolder;
-
+        const outputVideoFolder = finalOutputFolder;
         console.log(`Usando pasta de saída: ${outputVideoFolder}`);
         if (!fs.existsSync(outputVideoFolder)) {
           fs.mkdirSync(outputVideoFolder, { recursive: true });
