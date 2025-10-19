@@ -117,6 +117,18 @@ class Database {
       fs.unlinkSync(this.#databasePath);
     }
   }
+
 }
 
-module.exports = { Database };
+// Singleton pattern implementation
+let instance = null;
+function getDatabase(databasePath) {
+  if (!instance) {
+    instance = new Database(databasePath);
+  }
+  return instance;
+}
+
+const databasePath = path.join(__dirname, "..", "..", "database.json");
+const db = getDatabase(databasePath);
+module.exports = db;
