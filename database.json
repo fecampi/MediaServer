@@ -20,6 +20,13 @@
       "hlsUrl": "/hls/7475282e-d63a-4588-a59b-28aaecbb0e1d/master.m3u8",
       "segmentType": "fmp4",
       "uploadDate": "2025-10-06T13:26:40.098Z"
+    },
+    {
+      "id": "8669190c-a41e-4f6f-934d-83fad52519bd",
+      "originalName": "captured_8669190c-a41e-4f6f-934d-83fad52519bd.ts",
+      "hlsUrl": "/hls/8669190c-a41e-4f6f-934d-83fad52519bd/master.m3u8",
+      "segmentType": "ts",
+      "uploadDate": "2025-10-31T15:43:02.423Z"
     }
   ]
 }

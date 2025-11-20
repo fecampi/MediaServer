@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Media Server HLS - Player</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background: #121212;
+        color: #fff;
+      }
+
+      .card {
+        background: #1e1e1e;
+        border: 1px solid #333;
+        padding: 1.5rem;
+      }
+
+      select {
+        background: #333;
+        color: #fff;
+        border: 1px solid #555;
+        padding: 0.5rem;
+        border-radius: 6px;
+      }
+
+      #video {
+        width: 100%;
+        max-width: 900px;
+        border-radius: 10px;
+        border: 2px solid #333;
+        display: block;
+        margin: 0 auto;
+      }
+
+      label {
+        font-weight: 500;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Navbar -->
+    <%- include('header') %>
+
+    <div class="container">
+      <!-- Tabs -->
+      <%- include('tabs', { activeTab: 'player' }) %>
+
+      <!-- Subtitle -->
+      <div class="mb-4 text-center">
+        <p class="lead">Player HLS para reprodução de vídeos</p>
+      </div>
+
+      <!-- PLAYER CARD -->
+      <div class="card mx-auto" style="max-width: 900px;">
+        <!-- Video Picker -->
+        <div class="mb-3">
+          <label for="videoSelect" class="form-label">Escolha um vídeo:</label>
+          <select id="videoSelect" class="form-select"></select>
+        </div>
+
+        <!-- Video Player -->
+        <div class="text-center mb-3">
+          <video id="video" controls autoplay muted playsinline height="360">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <%- include('footer') %>
+
+    <!-- HLS.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+
+    <!-- Player Class -->
+    <script src="/js/Player.js"></script>
+
+    <script>
+      (function () {
+        const video = document.getElementById("video");
+        const select = document.getElementById("videoSelect");
+
+        function log(...a) {
+          console.log("[APP]", ...a);
+        }
+        function logErr(...a) {
+          console.error("[APP ERROR]", ...a);
+        }
+
+        const serverSource = <%- JSON.stringify(typeof source !== 'undefined' ? source : null) %>;
+        const urlParams = new URLSearchParams(window.location.search);
+        const querySource = urlParams.get("src");
+        const src = serverSource || querySource;
+
+        const serverVideos = (function () {
+          try {
+            return <%- JSON.stringify(typeof videos !== 'undefined' ? videos : []) %>;
+          } catch (e) {
+            return [];
+          }
+        })();
+
+        log("Server videos:", serverVideos);
+        log("Initial source:", src);
+
+        // Preencher select com vídeos
+        serverVideos.forEach((v, idx) => {
+          const option = document.createElement("option");
+          option.value = idx;
+          option.textContent =
+            (v.originalName || v.id || "video " + idx) +
+            " (" +
+            (v.segmentType || "") +
+            ")";
+          select.appendChild(option);
+        });
+
+        function urlForVideo(v) {
+          if (!v) return null;
+          if (v.fullUrl) return v.fullUrl;
+          if (v.hlsUrl) {
+            if (v.hlsUrl.startsWith("/")) {
+              return window.location.origin + v.hlsUrl;
+            }
+            return v.hlsUrl;
+          }
+          if (v.url) return v.url;
+          return null;
+        }
+
+        // Criar player
+        const player = new Player(video);
+
+        // Ao mudar seleção, tocar o vídeo escolhido
+        select.addEventListener("change", function () {
+          const v = serverVideos[this.value];
+          const chosen = urlForVideo(v);
+          player.load(chosen);
+        });
+
+        // Se houver vídeos, selecionar o primeiro por padrão
+        if (serverVideos.length > 0) {
+          select.value = 0;
+          select.dispatchEvent(new Event("change"));
+        } else if (src) {
+          player.load(src);
+        } else {
+          logErr("Nenhuma source fornecida");
+        }
+      })();
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

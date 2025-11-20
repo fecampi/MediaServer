@@ -2,20 +2,13 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const db = require("./database/Database");
-
-
 const upload = require("./utils/multer");
-
-
 //controllers
 const videoController = require("./controllers/videoController");
 const uploadController = require("./controllers/uploadController");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-
-
 
 // EJS configuration
 app.set("view engine", "ejs");
@@ -26,6 +19,13 @@ const distDir = path.join(__dirname, "..", "dist");
 app.use("/public", express.static(path.join(distDir, "public")));
 app.use("/hls", express.static(path.join(distDir, "hls")));
 app.use("/uploads", express.static(path.join(distDir, "uploads")));
+
+// Serve static files from public folder (for JS files)
+app.use("/js", express.static(path.join(__dirname, "..", "public", "js")));
+
+app.get("/.well-known/appspecific/com.chrome.devtools.json", (req, res) => {
+  res.json({ message: "DevTools metadata" });
+});
 
 // Middleware for parsing JSON and URL encoded
 app.use(express.json({ limit: "500mb" }));
@@ -45,9 +45,7 @@ app.post("/capture/original", (req, res) =>
 
 app.post("/capture/ts", (req, res) => videoController.captureTS(req, res));
 
-app.post("/capture/fmp4", (req, res) =>
-  videoController.captureFMP4(req, res)
-);
+app.post("/capture/fmp4", (req, res) => videoController.captureFMP4(req, res));
 // Main route
 app.get("/", (req, res) => videoController.renderIndex(req, res));
 
@@ -64,6 +62,11 @@ app.get("/videos", (req, res) => {
 });
 
 app.get("/videos", (req, res) => videoController.renderVideos(req, res));
+
+app.get("/player", async (req, res) => {
+  const videos = await db.select("videos");
+  res.render("player", { videos });
+});
 
 // Route to serve .ts segments with correct headers
 app.get("/hls/:id/*.ts", (req, res) =>

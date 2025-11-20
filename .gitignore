@@ -1,12 +1,12 @@
 # Node.js
 node_modules/
 .env
+database.json
 *.log
 dist/
 build/
 /uploads/
 /hls/
-/public/
 .DS_Store
 *.sqlite
 *.db
