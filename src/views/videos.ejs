@@ -185,6 +185,69 @@
         <p class="lead">Here are the videos available for streaming</p>
       </div>
 
+      <!-- Adicionar URL de mídia -->
+      <div
+        class="card mb-2"
+        style="
+          background: rgba(30, 30, 30, 0.95);
+          border-radius: 12px;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+          padding: 0.5rem 1rem;
+        "
+      >
+        <div class="card-body p-2">
+          <h6 class="card-title mb-2" style="color: #fff; font-size: 1rem">
+            Adicionar mídia por URL externa
+          </h6>
+          <form class="row g-2 align-items-center">
+            <div class="col-md-5">
+              <input
+                type="text"
+                name="name"
+                class="form-control form-control-sm"
+                placeholder="Nome da mídia"
+                style="
+                  background: #222;
+                  color: #fff;
+                  border: 1px solid #444;
+                  height: 32px;
+                  font-size: 0.95rem;
+                "
+              />
+            </div>
+            <div class="col-md-5">
+              <input
+                type="url"
+                name="url"
+                class="form-control form-control-sm"
+                placeholder="URL da mídia"
+                style="
+                  background: #222;
+                  color: #fff;
+                  border: 1px solid #444;
+                  height: 32px;
+                  font-size: 0.95rem;
+                "
+              />
+            </div>
+            <div class="col-md-2 d-grid">
+              <button
+                type="button"
+                class="btn btn-custom"
+                style="
+                  background: #e50914;
+                  color: #fff;
+                  height: 32px;
+                  font-size: 0.95rem;
+                "
+              >
+                Adicionar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <!-- VIDEO LIST CARD -->
       <div class="card" style="margin-bottom: 120px">
         <div
@@ -387,8 +450,39 @@
         const gridDiv = document.querySelector("#videoGrid");
         gridApi = agGrid.createGrid(gridDiv, gridOptions);
         loadVideos();
-      });
 
+        // Captura a url e name em FormData e envia para a API
+        const form = document.querySelector('.card-body form');
+        if (form) {
+          const addBtn = form.querySelector('button[type="button"]');
+          addBtn.addEventListener("click", async function () {
+            const data = new FormData(form);
+            const name = data.get("name");
+            const url = data.get("url");
+            if (!name || !url) {
+              alert("Preencha o nome e a URL da mídia.");
+              return;
+            }
+            try {
+              const res = await fetch("/api/videos/url", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: name, url })
+              });
+              const result = await res.json();
+              if (result.success) {
+                alert("Mídia adicionada com sucesso!");
+                form.reset();
+                loadVideos();
+              } else {
+                alert(result.error || "Erro ao adicionar mídia.");
+              }
+            } catch (err) {
+              alert("Erro de conexão com o servidor.");
+            }
+          });
+        }
+      });
       // Load videos on page load (fallback)
       window.addEventListener("load", loadVideos);
     </script>

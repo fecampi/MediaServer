@@ -73,6 +73,7 @@ app.get("/hls/:id/*.ts", (req, res) =>
   videoController.serveTsSegment(req, res)
 );
 
+
 // API routes to manage videos
 app.get("/api/videos", async (req, res) => {
   try {
@@ -80,6 +81,26 @@ app.get("/api/videos", async (req, res) => {
     res.json(videos);
   } catch (error) {
     res.status(500).json({ error: "Erro ao buscar vídeos" });
+  }
+});
+
+// Route to add video by URL
+app.post("/api/videos/url", async (req, res) => {
+  const { name, url } = req.body;
+  if (!name || !url) {
+    return res.status(400).json({ error: "Nome e URL são obrigatórios." });
+  }
+  try {
+    const newVideo = {
+      originalName: name,
+      hlsUrl: url,
+      segmentType: "url",
+      uploadDate: new Date().toISOString(),
+    };
+    const saved = await db.insert("videos", newVideo);
+    res.json({ success: true, video: saved });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao salvar vídeo." });
   }
 });
 
