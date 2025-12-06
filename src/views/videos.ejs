@@ -273,14 +273,6 @@
       // Column definitions
       const columnDefs = [
         {
-          headerName: "ID",
-          field: "id",
-          sortable: true,
-          filter: true,
-          flex: 1,
-          minWidth: 100,
-        },
-        {
           headerName: "Name",
           field: "originalName",
           sortable: true,
@@ -313,38 +305,6 @@
           },
         },
         {
-          headerName: "Video Info",
-          field: "videoInfo",
-          flex: 2,
-          minWidth: 200,
-          cellRenderer: (params) => {
-            const video = params.data;
-            let info = "";
-            if (video.videoCodec) {
-              info += `<b>Video:</b> ${video.videoCodec}`;
-              if (video.width && video.height) {
-                info += ` ${video.width}x${video.height}`;
-              }
-              if (video.fps) {
-                info += ` ${Math.round(video.fps * 10) / 10}fps`;
-              }
-              info += "<br />";
-            }
-            info += `<b>Audio:</b> ${video.audioCodec || "N/A"}<br />`;
-            if (video.duration) {
-              const minutes = Math.floor(video.duration / 60);
-              const seconds = ("0" + Math.floor(video.duration % 60)).slice(-2);
-              info += `<b>Duration:</b> ${minutes}:${seconds} min<br />`;
-            }
-            if (video.bitrate) {
-              info += `<b>Bitrate:</b> ${Math.round(
-                video.bitrate / 1000
-              )} kbps`;
-            }
-            return `<div class="video-info-cell">${info}</div>`;
-          },
-        },
-        {
           headerName: "Stream URL",
           field: "hlsUrl",
           flex: 1,
@@ -353,6 +313,19 @@
             const url = window.location.origin + params.value;
             return `<button class="btn-custom" title="${url}" onclick="copyUrl('${url}')"><i class="bi bi-clipboard"></i></button>`;
           },
+        },
+        {
+          headerName: "Play",
+          field: "play",
+          flex: 1,
+          minWidth: 80,
+          cellRenderer: (params) => {
+            const video = params.data;
+            const hlsUrl = window.location.origin + video.hlsUrl;
+            return `<button class="btn-custom" title="Play Video" onclick="window.location.href='/player?src=${encodeURIComponent(hlsUrl)}'"><i class="bi bi-play"></i></button>`;
+          },
+          sortable: false,
+          filter: false,
         },
         {
           headerName: "Actions",

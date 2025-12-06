@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGAI Livestream Service</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .header .lead {
+            color: #aaa;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #e50914;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-box {
+            background: #2a2a2a;
+            border-left: 4px solid #e50914;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .info-box strong {
+            color: #e50914;
+        }
+
+        .form-label {
+            color: #aaa;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 5px;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: #333;
+            border-color: #e50914;
+            color: #fff;
+            box-shadow: 0 0 0 0.2rem rgba(229, 9, 20, 0.25);
+        }
+
+        .form-control::placeholder {
+            color: #666;
+        }
+
+        .param-item {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            align-items: center;
+        }
+
+        .param-item input {
+            flex: 1;
+        }
+
+        .btn-remove {
+            background: #dc3545;
+            border: none;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .btn-remove:hover {
+            background: #c82333;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: #e50914;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ff1a1a;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .url-display {
+            background: #0d0d0d;
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid #333;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #4caf50;
+            margin-top: 1rem;
+        }
+
+        .status-message {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            display: none;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.9rem;
+        }
+
+        .status-message.status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-message.status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .response-box {
+            background: #0d0d0d;
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid #333;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            max-height: 400px;
+            overflow-y: auto;
+            color: #aaa;
+        }
+
+        .polling-status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+
+        .spinner {
+            border: 3px solid #333;
+            border-top: 3px solid #e50914;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 1.5rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .param-item {
+                flex-direction: column;
+            }
+            
+            .param-item input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <%- include('header') %>
+
+    <div class="container">
+      <!-- Tabs -->
+      <%- include('tabs', { activeTab: 'sgai' }) %>
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="bi bi-broadcast"></i> SGAI Livestream Service</h1>
+            <p class="lead">Configuração dinâmica baseada na documentação oficial do Google Ad Manager</p>
+        </div>
+
+        <div class="info-box">
+            <i class="bi bi-info-circle"></i> <strong>URL Base:</strong> https://dai.google.com/ssai/pods/api/v1/network/<strong>{networkCode}</strong>/custom_asset/<strong>{customAsset}</strong>/stream
+        </div>
+
+        <!-- Parâmetros Obrigatórios -->
+        <div class="card">
+            <h2><i class="bi bi-gear"></i> Parâmetros Obrigatórios</h2>
+            <div class="param-group" id="requiredParams">
+                <div class="param-item">
+                    <input type="text" class="form-control" placeholder="Nome (ex: networkCode)" value="networkCode">
+                    <input type="text" class="form-control" placeholder="Valor (ex: 51636543)" value="51636543">
+                    <button class="btn-remove" onclick="removeParam(this)"><i class="bi bi-trash"></i></button>
+                </div>
+                <div class="param-item">
+                    <input type="text" class="form-control" placeholder="Nome (ex: customAsset)" value="customAsset">
+                    <input type="text" class="form-control" placeholder="Valor (ex: hls-podserving-manifest)" value="hls-podserving-manifest">
+                    <button class="btn-remove" onclick="removeParam(this)"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+            <button class="btn btn-secondary mt-2" onclick="addRequiredParam()">
+                <i class="bi bi-plus-circle"></i> Adicionar Parâmetro Obrigatório
+            </button>
+        </div>
+
+        <!-- Parâmetros de Query -->
+        <div class="card">
+            <h2><i class="bi bi-list-ul"></i> Parâmetros Customizados (cust_params)</h2>
+            <div class="param-group" id="queryParams">
+                <div class="param-item">
+                    <input type="text" class="form-control" placeholder="Nome (ex: anotherKey)" value="anotherKey">
+                    <input type="text" class="form-control" placeholder="Valor (ex: value1,value2)" value="value1,value2">
+                    <button class="btn-remove" onclick="removeParam(this)"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+            <button class="btn btn-secondary mt-2" onclick="addQueryParam()">
+                <i class="bi bi-plus-circle"></i> Adicionar Parâmetro Customizado
+            </button>
+            <div class="info-box" style="margin-top: 1rem;">
+                <i class="bi bi-info-circle"></i> <strong>Nota:</strong> Todos os parâmetros customizados serão enviados dentro do campo <code>cust_params</code> no corpo da requisição.
+            </div>
+        </div>
+
+        <!-- URL Original -->
+        <div class="card">
+            <h2><i class="bi bi-globe"></i> URL Original</h2>
+            <div class="mb-3">
+                <textarea class="form-control" id="originalUrl" rows="3" placeholder="Cole a URL original do stream aqui"></textarea>
+            </div>
+        </div>
+
+        <!-- URL Gerada -->
+        <div class="card">
+            <h2><i class="bi bi-link-45deg"></i> Request URL Gerada</h2>
+            <div class="url-display" id="generatedUrl"></div>
+        </div>
+
+        <!-- Registrar Stream -->
+        <div class="card">
+            <h2><i class="bi bi-1-circle"></i> Registrar Stream (POST)</h2>
+            <button class="btn btn-primary" onclick="registerStream()">
+                <i class="bi bi-upload"></i> Registrar Stream
+            </button>
+            <div class="status-message" id="registerStatus"></div>
+            <div class="response-box" id="registerResponse" style="display: none;"></div>
+        </div>
+
+        <!-- Polling de Metadados -->
+        <div class="card">
+            <h2><i class="bi bi-2-circle"></i> Polling de Metadados</h2>
+            <div class="btn-group">
+                <button class="btn btn-success" onclick="startPolling()">
+                    <i class="bi bi-play-circle"></i> Iniciar Polling
+                </button>
+                <button class="btn btn-warning" onclick="stopPolling()">
+                    <i class="bi bi-stop-circle"></i> Parar Polling
+                </button>
+            </div>
+            
+            <div class="polling-status" id="pollingStatus" style="display: none;">
+                <div class="spinner"></div>
+                <span>Polling em andamento...</span>
+            </div>
+            <div class="status-message" id="pollingStatusMsg"></div>
+            <div class="response-box" id="pollingResponse" style="display: none;"></div>
+            <div class="info-box" style="margin-top: 1rem;">
+                <i class="bi bi-info-circle"></i> <strong>Nota:</strong> O intervalo de polling é definido automaticamente pela API após registrar o stream.
+            </div>
+        </div>
+
+        <!-- Gerar URL do Pod Manifest -->
+        <div class="card">
+            <h2><i class="bi bi-3-circle"></i> Gerar URL do Pod Manifest</h2>
+            <button class="btn btn-warning" onclick="generatePodManifestUrl()">
+                <i class="bi bi-file-earmark-code"></i> Gerar URL do Pod Manifest
+            </button>
+            <div class="status-message" id="podStatus"></div>
+            <div class="url-display" id="podManifestUrl" style="display: none;"></div>
+        </div>
+
+        <!-- Gerar URL Final -->
+        <div class="card">
+            <h2><i class="bi bi-4-circle"></i> Gerar URL Final</h2>
+            <button class="btn btn-info" onclick="generateFinalUrl()">
+                <i class="bi bi-link"></i> Gerar URL Final
+            </button>
+            <div class="status-message" id="finalStatus"></div>
+            <div class="url-display" id="finalUrl" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let pollingIntervalId = null;
+        let streamData = null;
+        let pollingFrequency = 10; // valor padrão
+
+        function updateUrl() {
+            const params = getRequiredParams();
+            const missingFields = [];
+
+            // Verificar se temos pelo menos networkCode e customAsset (campos mínimos para a URL)
+            if (!params.networkCode || !params.customAsset) {
+                document.getElementById('generatedUrl').textContent = 'Configure networkCode e customAsset';
+                return null;
+            }
+
+            // Construir a URL base
+            const url = `https://dai.google.com/ssai/pods/api/v1/network/${params.networkCode}/custom_asset/${params.customAsset}/stream`;
+            document.getElementById('generatedUrl').textContent = url;
+            return url;
+        }
+
+        function addRequiredParam() {
+            const container = document.getElementById('requiredParams');
+            const div = document.createElement('div');
+            div.className = 'param-item';
+            div.innerHTML = `
+                <input type="text" class="form-control" placeholder="Nome do parâmetro">
+                <input type="text" class="form-control" placeholder="Valor">
+                <button class="btn-remove" onclick="removeParam(this)"><i class="bi bi-trash"></i></button>
+            `;
+            container.appendChild(div);
+        }
+
+        function addQueryParam() {
+            const container = document.getElementById('queryParams');
+            const div = document.createElement('div');
+            div.className = 'param-item';
+            div.innerHTML = `
+                <input type="text" class="form-control" placeholder="Nome do parâmetro">
+                <input type="text" class="form-control" placeholder="Valor do parâmetro">
+                <button class="btn-remove" onclick="removeParam(this)"><i class="bi bi-trash"></i></button>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeParam(btn) {
+            btn.parentElement.remove();
+            updateUrl(); // Atualizar URL quando um parâmetro for removido
+        }
+
+        function getRequiredParams() {
+            const container = document.getElementById('requiredParams');
+            const items = container.querySelectorAll('.param-item');
+            const params = {};
+            
+            items.forEach(item => {
+                const inputs = item.querySelectorAll('.form-control');
+                const name = inputs[0].value.trim();
+                const value = inputs[1].value.trim();
+                if (name && value) {
+                    params[name] = value;
+                }
+            });
+            
+            return params;
+        }
+
+        function getQueryParams() {
+            const container = document.getElementById('queryParams');
+            const items = container.querySelectorAll('.param-item');
+            const params = {};
+            
+            items.forEach(item => {
+                const inputs = item.querySelectorAll('.form-control');
+                const name = inputs[0].value.trim();
+                const value = inputs[1].value.trim();
+                if (name && value) {
+                    params[name] = value;
+                }
+            });
+            
+            return params;
+        }
+
+        function showStatus(elementId, message, type) {
+            const status = document.getElementById(elementId);
+            status.textContent = message;
+            status.className = `status-message status-${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 10000);
+        }
+
+        function showResponse(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+            element.style.display = 'block';
+        }
+
+        async function registerStream() {
+            const url = updateUrl();
+            if (!url) {
+                showStatus('registerStatus', 'Configure os parâmetros obrigatórios', 'error');
+                return;
+            }
+            
+            try {
+                const queryParams = getQueryParams();
+                
+                // Criar o corpo da requisição com cust_params contendo todos os parâmetros customizados
+                const bodyParams = {};
+                
+                // Se houver parâmetros de query, juntar todos em cust_params
+                if (Object.keys(queryParams).length > 0) {
+                    // Converter os parâmetros em formato URL encoded
+                    const custParamsArray = [];
+                    for (const [key, value] of Object.entries(queryParams)) {
+                        custParamsArray.push(`${key}=${value}`);
+                    }
+                    bodyParams.cust_params = custParamsArray.join('&');
+                }
+                
+                const formData = new URLSearchParams(bodyParams).toString();
+                
+                console.log('Registrando stream...');
+                console.log('URL:', url);
+                console.log('Body:', formData);
+                console.log('Query Params:', queryParams);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    streamData = data;
+                    showStatus('registerStatus', '✅ Stream registrado com sucesso!', 'success');
+                    showResponse('registerResponse', data);
+                    console.log('Stream registrado:', data);
+                    
+                    // Usar o polling_frequency retornado pela API
+                    if (data.polling_frequency) {
+                        pollingFrequency = data.polling_frequency;
+                        console.log('Polling frequency definido pela API:', pollingFrequency);
+                    }
+                } else {
+                    showStatus('registerStatus', `❌ Erro: ${response.status} - ${data.error || 'Erro desconhecido'}`, 'error');
+                    showResponse('registerResponse', data);
+                }
+            } catch (error) {
+                showStatus('registerStatus', `❌ Erro: ${error.message}`, 'error');
+                console.error('Erro:', error);
+            }
+        }
+
+        async function pollMetadata() {
+            if (!streamData || !streamData.metadata_url) {
+                console.error('Metadata URL não disponível. Registre o stream primeiro.');
+                return;
+            }
+            
+            try {
+                const response = await fetch(streamData.metadata_url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Polling response:', data);
+                    showResponse('pollingResponse', data);
+                    
+                    if (data.ad_breaks && Object.keys(data.ad_breaks).length > 0) {
+                        showStatus('pollingStatusMsg', `✅ ${Object.keys(data.ad_breaks).length} ad break(s) disponível(eis)!`, 'success');
+                    } else {
+                        showStatus('pollingStatusMsg', 'ℹ️ Aguardando ad breaks...', 'info');
+                    }
+                }
+            } catch (error) {
+                console.error('Erro no polling:', error);
+                showStatus('pollingStatusMsg', `❌ Erro no polling: ${error.message}`, 'error');
+            }
+        }
+
+        function startPolling() {
+            if (!streamData) {
+                showStatus('pollingStatusMsg', '❌ Registre o stream primeiro', 'error');
+                return;
+            }
+
+            if (pollingIntervalId) {
+                showStatus('pollingStatusMsg', 'ℹ️ Polling já está em andamento', 'info');
+                return;
+            }
+
+            // Usar o polling frequency definido pela API ou o valor padrão
+            const intervalSeconds = pollingFrequency;
+            
+            document.getElementById('pollingStatus').style.display = 'flex';
+            showStatus('pollingStatusMsg', `✅ Polling iniciado (intervalo: ${intervalSeconds}s - definido pela API)`, 'info');
+            
+            pollingIntervalId = setInterval(pollMetadata, intervalSeconds * 1000);
+            pollMetadata();
+        }
+
+        function stopPolling() {
+            if (pollingIntervalId) {
+                clearInterval(pollingIntervalId);
+                pollingIntervalId = null;
+                pollingFrequency = 10; // Resetar para valor padrão
+                document.getElementById('pollingStatus').style.display = 'none';
+                showStatus('pollingStatusMsg', '⏸️ Polling parado', 'info');
+            }
+        }
+
+        function generatePodManifestUrl() {
+            if (!streamData || !streamData.stream_id) {
+                showStatus('podStatus', '❌ Registre o stream primeiro', 'error');
+                return;
+            }
+
+            const params = getRequiredParams();
+            const adBreakId = params.adBreakId;
+            const duration = params.duration;
+
+            if (!adBreakId || !duration) {
+                showStatus('podStatus', '❌ Configure Ad Break ID e Duration', 'error');
+                return;
+            }
+
+            const podUrl = `https://dai.google.com/linear/pods/v1/hls/network/${params.networkCode}/custom_asset/${params.customAsset}/ad_break_id/${adBreakId}.m3u8?stream_id=${encodeURIComponent(streamData.stream_id)}&pd=${duration}`;
+
+            document.getElementById('podManifestUrl').innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="flex: 1;">${podUrl}</span>
+                    <button class="btn btn-success btn-sm" onclick="playUrl('${podUrl}')">
+                        <i class="bi bi-play"></i> Tocar
+                    </button>
+                </div>
+            `;
+            document.getElementById('podManifestUrl').style.display = 'block';
+            showStatus('podStatus', '✅ URL do Pod Manifest gerada com sucesso!', 'success');
+
+            console.log('Pod Manifest URL:', podUrl);
+        }
+
+        function generateFinalUrl() {
+            if (!streamData || !streamData.stream_id) {
+                showStatus('finalStatus', '❌ Registre o stream primeiro', 'error');
+                return;
+            }
+
+            const params = getRequiredParams();
+            const originalUrl = document.getElementById('originalUrl').value.trim();
+
+            // Gera a URL do pod manifest
+            const podUrl = `https://dai.google.com/linear/pods/v1/hls/network/${params.networkCode}/custom_asset/${params.customAsset}.m3u8?stream_id=${encodeURIComponent(streamData.stream_id)}`;
+
+            let finalUrl;
+            if (originalUrl) {
+                // Concatena com a URL original
+                finalUrl = `${originalUrl}?dai_url=${encodeURIComponent(podUrl)}`;
+            } else {
+                // Se não tem URL original, retorna apenas a URL interna
+                finalUrl = podUrl;
+            }
+
+            document.getElementById('finalUrl').innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="flex: 1;">${finalUrl}</span>
+                    <button class="btn btn-success btn-sm" onclick="playUrl('${finalUrl}')">
+                        <i class="bi bi-play"></i> Tocar
+                    </button>
+                </div>
+            `;
+            document.getElementById('finalUrl').style.display = 'block';
+            showStatus('finalStatus', '✅ URL final gerada com sucesso!', 'success');
+
+            console.log('Pod Manifest URL:', podUrl);
+            console.log('URL Final:', finalUrl);
+        }
+
+        function playUrl(url) {
+            window.location.href = `/player?src=${encodeURIComponent(url)}`;
+        }
+
+        window.onload = () => {
+            updateUrl();
+        };
+    </script>
+</body>
+</html>

@@ -61,12 +61,6 @@
 
       <!-- PLAYER CARD -->
       <div class="card mx-auto" style="max-width: 900px;">
-        <!-- Video Picker -->
-        <div class="mb-3">
-          <label for="videoSelect" class="form-label">Escolha um vídeo:</label>
-          <select id="videoSelect" class="form-select"></select>
-        </div>
-
         <!-- Video Player -->
         <div class="text-center mb-3">
           <video id="video" controls autoplay muted playsinline height="360">
@@ -88,7 +82,6 @@
     <script>
       (function () {
         const video = document.getElementById("video");
-        const select = document.getElementById("videoSelect");
 
         function log(...a) {
           console.log("[APP]", ...a);
@@ -102,57 +95,13 @@
         const querySource = urlParams.get("src");
         const src = serverSource || querySource;
 
-        const serverVideos = (function () {
-          try {
-            return <%- JSON.stringify(typeof videos !== 'undefined' ? videos : []) %>;
-          } catch (e) {
-            return [];
-          }
-        })();
-
-        log("Server videos:", serverVideos);
         log("Initial source:", src);
-
-        // Preencher select com vídeos
-        serverVideos.forEach((v, idx) => {
-          const option = document.createElement("option");
-          option.value = idx;
-          option.textContent =
-            (v.originalName || v.id || "video " + idx) +
-            " (" +
-            (v.segmentType || "") +
-            ")";
-          select.appendChild(option);
-        });
-
-        function urlForVideo(v) {
-          if (!v) return null;
-          if (v.fullUrl) return v.fullUrl;
-          if (v.hlsUrl) {
-            if (v.hlsUrl.startsWith("/")) {
-              return window.location.origin + v.hlsUrl;
-            }
-            return v.hlsUrl;
-          }
-          if (v.url) return v.url;
-          return null;
-        }
 
         // Criar player
         const player = new Player(video);
 
-        // Ao mudar seleção, tocar o vídeo escolhido
-        select.addEventListener("change", function () {
-          const v = serverVideos[this.value];
-          const chosen = urlForVideo(v);
-          player.load(chosen);
-        });
-
-        // Se houver vídeos, selecionar o primeiro por padrão
-        if (serverVideos.length > 0) {
-          select.value = 0;
-          select.dispatchEvent(new Event("change"));
-        } else if (src) {
+        // Carregar o vídeo diretamente se houver src
+        if (src) {
           player.load(src);
         } else {
           logErr("Nenhuma source fornecida");

@@ -33,6 +33,21 @@ class Player {
 
     if (!url) return this.logErr("URL vazia");
 
+    // Verificar se é uma URL com parâmetro dai_url para DAI
+    const urlObj = new URL(url);
+    const daiUrl = urlObj.searchParams.get('dai_url');
+
+    if (daiUrl) {
+      // Remover o parâmetro dai_url da URL original
+      urlObj.searchParams.delete('dai_url');
+      const cleanUrl = urlObj.toString();
+
+      this.log("URL original (limpa):", cleanUrl);
+      this.log("URL DAI:", daiUrl);
+
+      return this._playHlsWithDAI(cleanUrl, daiUrl);
+    }
+
     if (url.toLowerCase().endsWith(".mp4")) {
       return this._playMp4(url);
     }
@@ -76,6 +91,7 @@ class Player {
       enableInterstitialPlayback: true,
       interstitialAppendInPlace: true,
       interstitialLiveLookAhead: 20,
+      debug: true,
     });
 
     this.hls = hls;
@@ -199,6 +215,145 @@ class Player {
 
     hls.attachMedia(this.video);
     hls.loadSource(url);
+
+    this.video.play().catch(this.logErr);
+  }
+
+  // ======================================================
+  //  HLS.js + DAI INTERSTITIALS
+  // ======================================================
+  _playHlsWithDAI(contentUrl, daiUrl) {
+    this.log("HLS via Hls.js com DAI interstitials");
+    this.log("Content URL:", contentUrl);
+    this.log("DAI URL:", daiUrl);
+
+    const hls = new Hls({
+      maxBufferLength: 60,
+      maxMaxBufferLength: 120,
+      enableMetadata: true,
+      lowLatencyMode: true,
+      interstitialsUseSameMedia: true,
+      enableInterstitialPlayback: true,
+      interstitialAppendInPlace: true,
+      interstitialLiveLookAhead: 20,
+      debug: true,
+    });
+
+    this.hls = hls;
+
+    // Configurar interstitials com a URL DAI
+    hls.config.interstitials = [{
+      url: daiUrl,
+      type: 'vast', // ou o tipo apropriado para DAI
+      start: 0, // será controlado dinamicamente
+      duration: 0 // será controlado dinamicamente
+    }];
+
+    // ---- EVENTOS DE MANIFEST E QUALIDADE ----
+
+    hls.on(Hls.Events.MANIFEST_LOADING, (evt, data) => {
+      this.log("MANIFEST_LOADING:", data);
+    });
+
+    hls.on(Hls.Events.MANIFEST_PARSED, (evt, data) => {
+      this.log("MANIFEST_PARSED:", data);
+    });
+
+    hls.on(Hls.Events.LEVEL_LOADED, (evt, data) => {
+      this.log(`LEVEL_LOADED - Variante ${data.level}:`);
+
+      let m3u8Text = null;
+      if (data.networkDetails?.response) {
+        m3u8Text = data.networkDetails.response;
+      } else if (data.details?.text) {
+        m3u8Text = data.details.text;
+      } else if (data.details?.payload) {
+        m3u8Text = data.details.payload;
+      }
+
+      if (m3u8Text) {
+        this.log(`\n🔍 MANIFEST ORIGINAL (${data.details.url}):\n`);
+        console.log(m3u8Text);
+      } else {
+        this.log("Texto original não disponível:", data);
+      }
+    });
+
+    hls.on(Hls.Events.LEVEL_SWITCHED, (evt, data) => {
+      this.log(`LEVEL_SWITCHED para nível ${data.level}`);
+    });
+
+    // ---- EVENTOS DE INTERSTITIALS ----
+
+    this._nextInterstitial = null;
+
+    hls.on(Hls.Events.INTERSTITIALS_UPDATED, (evt, data) => {
+      if (Array.isArray(data.schedule)) {
+        this._nextInterstitial =
+          data.schedule.find((item) => item.start > this.video.currentTime) ||
+          null;
+        if (this._nextInterstitial) {
+          this.log(
+            `Próxima interação/interstitial em: ${(
+              this._nextInterstitial.start - this.video.currentTime
+            ).toFixed(1)} segundos`
+          );
+        } else {
+          this.log("Nenhuma interação/interstitial futura encontrada.");
+        }
+      }
+    });
+
+    this.video.addEventListener("timeupdate", () => {
+      if (this._nextInterstitial) {
+        const timeLeft = this._nextInterstitial.start - this.video.currentTime;
+        if (timeLeft > 0) {
+          this.log(
+            `Próxima interação/interstitial em: ${timeLeft.toFixed(1)} segundos`
+          );
+        }
+      }
+      if (this._currentInterstitialEnd) {
+        const leaveTime = this._currentInterstitialEnd - this.video.currentTime;
+        if (leaveTime > 0) {
+          this.log(
+            `Tempo restante para sair do interstitial: ${leaveTime.toFixed(
+              1
+            )} segundos`
+          );
+        }
+      }
+    });
+
+    hls.on(Hls.Events.INTERSTITIAL_STARTED, (evt, data) => {
+      const dur = data.dateRange?.attr?.DURATION;
+      if (typeof dur === "number") {
+        this._currentInterstitialEnd = this.video.currentTime + dur;
+        this.log(
+          `Tempo restante para sair do interstitial: ${dur.toFixed(1)} segundos`
+        );
+      } else {
+        this._currentInterstitialEnd = null;
+        this.log("Duração do interstitial não informada.");
+      }
+      this.log("INTERSTITIAL_STARTED:", data);
+    });
+
+    hls.on(Hls.Events.INTERSTITIAL_ENDED, (evt, data) => {
+      this._currentInterstitialEnd = null;
+      this.log("INTERSTITIAL_ENDED:", data);
+    });
+
+    hls.on(Hls.Events.INTERSTITIALS_PRIMARY_RESUMED, (evt, data) => {
+      this.log("INTERSTITIALS_PRIMARY_RESUMED:", data);
+    });
+
+    hls.on(Hls.Events.ERROR, (e, err) => {
+      this.logErr("HLS ERROR:", err);
+    });
+
+    hls.attachMedia(this.video);
+    hls.loadSource(contentUrl);
 
     this.video.play().catch(this.logErr);
   }

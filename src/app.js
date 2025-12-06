@@ -63,9 +63,24 @@ app.get("/videos", (req, res) => {
 
 app.get("/videos", (req, res) => videoController.renderVideos(req, res));
 
+
 app.get("/player", async (req, res) => {
   const videos = await db.select("videos");
   res.render("player", { videos });
+});
+
+// Nova rota para TV Player (fullscreen)
+app.get("/tvplayer", async (req, res) => {
+  const videos = await db.select("videos");
+  res.render("tvplayer", { videos });
+});
+
+// Rota para SGAI (Server-Side Ad Insertion)
+app.get("/sgai", (req, res) => {
+  res.render("sgai", {
+    title: "SGAI Livestream Service",
+    activeTab: "sgai"
+  });
 });
 
 // Route to serve .ts segments with correct headers
@@ -107,6 +122,28 @@ app.post("/api/videos/url", async (req, res) => {
 app.get("/api/videos/:id", (req, res) =>
   videoController.getVideoById(req, res)
 );
+
+// Nova rota para retornar a URL do vídeo por ID
+app.get("/api/video/:id/url", async (req, res) => {
+  try {
+    const video = await db.select("videos", { id: req.params.id });
+    if (video.length === 0) {
+      return res.status(404).json({ error: "Vídeo não encontrado" });
+    }
+    const v = video[0];
+    let url = null;
+    if (v.fullUrl) url = v.fullUrl;
+    else if (v.hlsUrl) {
+      url = v.hlsUrl.startsWith("/") ? `${req.protocol}://${req.get('host')}${v.hlsUrl}` : v.hlsUrl;
+    } else if (v.url) url = v.url;
+    if (!url) {
+      return res.status(404).json({ error: "URL não disponível para este vídeo" });
+    }
+    res.json({ url });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao buscar URL do vídeo" });
+  }
+});
 
 app.delete("/api/videos/:id", (req, res) =>
   videoController.deleteVideo(req, res)

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Media Server HLS - TV Player</title>
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background: #121212;
+        color: #fff;
+      }
+      body, .tv-container {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .tv-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100vw;
+        height: 100vh;
+        background: #121212;
+      }
+      #video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: contain;
+        background: #000;
+        border: none;
+        margin: 0;
+        display: block;
+      }
+      .tv-controls {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        background: rgba(30,30,30,0.8);
+        border-radius: 10px;
+        padding: 1rem 2rem;
+        box-shadow: 0 2px 16px #000a;
+      }
+      .tv-controls label, .tv-controls select {
+        color: #fff;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div class="tv-container">
+      <div class="tv-controls">
+        <label for="videoSelect" class="form-label">Escolha um vídeo:</label>
+        <select id="videoSelect" class="form-select"></select>
+      </div>
+      <video id="video" controls autoplay muted playsinline></video>
+    </div>
+    <%- include('footer') %>
+
+    <script src="/js/hls.js"></script>
+    <script src="/js/Player.js"></script>
+    <script>
+      (function () {
+        const video = document.getElementById("video");
+        const select = document.getElementById("videoSelect");
+        function log(...a) { console.log("[TVPLAYER]", ...a); }
+        function logErr(...a) { console.error("[TVPLAYER ERROR]", ...a); }
+        const serverSource = <%- JSON.stringify(typeof source !== 'undefined' ? source : null) %>;
+        const urlParams = new URLSearchParams(window.location.search);
+        const querySource = urlParams.get("src");
+        const src = serverSource || querySource;
+        const serverVideos = (function () {
+          try {
+            return <%- JSON.stringify(typeof videos !== 'undefined' ? videos : []) %>;
+          } catch (e) {
+            return [];
+          }
+        })();
+        log("Server videos:", serverVideos);
+        log("Initial source:", src);
+        serverVideos.forEach((v, idx) => {
+          const option = document.createElement("option");
+          option.value = idx;
+          option.textContent =
+            (v.originalName || v.id || "video " + idx) +
+            " (" + (v.segmentType || "") + ")";
+          select.appendChild(option);
+        });
+        function urlForVideo(v) {
+          if (!v) return null;
+          if (v.fullUrl) return v.fullUrl;
+          if (v.hlsUrl) {
+            if (v.hlsUrl.startsWith("/")) {
+              return window.location.origin + v.hlsUrl;
+            }
+            return v.hlsUrl;
+          }
+          if (v.url) return v.url;
+          return null;
+        }
+        const player = new Player(video);
+        select.addEventListener("change", function () {
+          const v = serverVideos[this.value];
+          const chosen = urlForVideo(v);
+          player.load(chosen);
+        });
+        if (serverVideos.length > 0) {
+          select.value = 0;
+          select.dispatchEvent(new Event("change"));
+        } else if (src) {
+          player.load(src);
+        } else {
+          logErr("Nenhuma source fornecida");
+        }
+      })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
